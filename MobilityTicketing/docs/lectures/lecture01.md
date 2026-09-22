@@ -14,7 +14,7 @@ Approximately 90 minutes.
 2. Decide the primary key of the route-stop relation and explain the decision.
 3. Add primary-key and foreign-key relationships.
 4. Insert the supplied seed data.
-5. Write the three workload queries in `database/postgres/003_queries.sql.example`.
+5. Write the three workload queries in `database/postgres/queries/lecture01_queries.sql`.
 6. Compare the implemented schema with your ER diagram and record any difference.
 
 ## Workload queries

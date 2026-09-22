@@ -2,12 +2,12 @@
 
 The database owns row-local invariants. Transaction/application services own
 rules that require coordination across concurrent writes or external systems.
-The negative checks in `database/postgres/experiments/lecture02_constraints.sql`
+The negative checks in `database/postgres/experiments/lecture02/lecture02_constraints.sql`
 run in a transaction and report expected PostgreSQL constraint failures.
 
-The historical `constraints_should_fail.sql` belongs to the pre-contract model
+The historical `database/postgres/experiments/lecture02/constraints_should_fail.sql` belongs to the pre-contract model
 and tests `tickets.product_code`. Run it after migrations `011`-`018` but
-before `030`-`032`. The maintained `lecture02_constraints.sql` belongs to the
+before `030`-`032`. The maintained `database/postgres/experiments/lecture02/lecture02_constraints.sql` belongs to the
 final post-contract model and tests `tickets.product_id`; run it only after
 `032_contract_product_identity.sql`. Expected named constraint failures are
 success evidence. Unexpected missing-column, missing-constraint, or syntax

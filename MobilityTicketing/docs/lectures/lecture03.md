@@ -38,7 +38,7 @@ the trigger summary only when low-latency repeated reads justify its write and
 operational complexity. Use the materialized view for deliberately stale,
 cheap reporting windows.
 
-Run `database/postgres/experiments/lecture03_reporting.sql` after applying
+Run `database/postgres/experiments/lecture03/lecture03_reporting.sql` after applying
 the base schema and migration `020_reporting_objects.sql`. The experiment
 prints a `72.00` baseline for all four strategies, then inserts a temporary
 `10.00` captured payment. While it exists, the direct query, function, and

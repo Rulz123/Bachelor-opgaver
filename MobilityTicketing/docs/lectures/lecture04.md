@@ -85,7 +85,7 @@ Apply baseline schema and seed files first because the draft ticketing schema
 is intentionally unconstrained. Apply integrity migrations `011`-`018`, then
 reporting migration `020`, then product migrations `030` and `031`. Run the
 post-contract negative checks only after `032`; run the historical
-`constraints_should_fail.sql` before `032` because it intentionally references
+`database/postgres/experiments/lecture02/constraints_should_fail.sql` before `032` because it intentionally references
 the legacy `product_code` model. Expected constraint errors are test evidence;
 any unexpected SQL error or missing object is a failed verification.
 

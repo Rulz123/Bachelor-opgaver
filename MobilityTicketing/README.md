@@ -64,24 +64,24 @@ reset casually; `docker compose down -v` deletes this project's database data.
 
 ## Verification
 
-Lecture 1 workload queries are in `database/postgres/003_queries.sql`. Run
+Lecture 1 workload queries are in `database/postgres/queries/lecture01_queries.sql`. Run
 them with representative parameters and record results. Expected-success
 verification uses `-v ON_ERROR_STOP=1`.
 
 The original Lecture 2 negative checks are in
-`database/postgres/experiments/constraints_should_fail.sql`; run them
+`database/postgres/experiments/lecture02/constraints_should_fail.sql`; run them
 separately against the pre-contract schema. The maintained post-contract
-checks are in `database/postgres/experiments/lecture02_constraints.sql`.
+checks are in `database/postgres/experiments/lecture02/lecture02_constraints.sql`.
 PostgreSQL rejection by a named constraint is expected evidence, not an
 unexpected test failure. The complete invariant ownership catalogue is in
-`docs/lecture02.md`.
+`docs/lectures/lecture02.md`.
 
 Lecture 3 reporting definitions and comparison are documented in
-`docs/lecture03.md`; run `database/postgres/experiments/lecture03_reporting.sql`
+`docs/lectures/lecture03.md`; run `database/postgres/experiments/lecture03/lecture03_reporting.sql`
 after migration `020_reporting_objects.sql`.
 
-Lecture 4 product identity is documented in `docs/lecture04.md`; run
-`database/postgres/experiments/lecture04_product_identity.sql` for the isolated
+Lecture 4 product identity is documented in `docs/lectures/lecture04.md`; run
+`database/postgres/experiments/lecture04/lecture04_product_identity.sql` for the isolated
 expand/backfill/NOT NULL-failure evidence. Apply `032_contract_product_identity.sql`
 only after its stated preconditions are satisfied.
 
@@ -97,9 +97,12 @@ identity-migration objects documented above.
 - `compose.yaml`: PostgreSQL 17 infrastructure.
 - `database/postgres/init/`: baseline schema and deterministic seed files.
 - `database/postgres/migrations/`: ordered integrity, reporting, and product-identity changes.
-- `database/postgres/queries/`: reusable reporting queries.
-- `database/postgres/experiments/`: expected failures and isolated behavior demonstrations.
-- `docs/`: domain model, lab brief, audit, and Lecture 3-4 design notes.
+- `database/postgres/init/`: baseline schema and deterministic seed data.
+- `database/postgres/migrations/`: chronological, append-only database migrations.
+- `database/postgres/queries/`: reusable read queries grouped by lecture.
+- `database/postgres/experiments/`: executable demonstrations grouped by lecture.
+- `docs/lectures/`: lecture-specific documentation.
+- `docs/`: general domain, audit, and evidence documents.
 
 # Compulsory Assignment 1 review guide
 
@@ -111,13 +114,13 @@ Full evidence matrix: [W39 evidence matrix](docs/w39-evidence.md)
 
 ## Where to find the work
 
-Lecture 1: model, workload map and queries: [dossier](docs/dossier.md), [lab brief](docs/lab.md), [queries](database/postgres/003_queries.sql)
+Lecture 1: model, workload map and queries: [dossier](docs/dossier.md), [lecture brief](docs/lectures/lecture01.md), [queries](database/postgres/queries/lecture01_queries.sql)
 
-Lecture 2: constraints and tests: [integrity catalogue](docs/lecture02.md), [post-contract tests](database/postgres/experiments/lecture02_constraints.sql)
+Lecture 2: constraints and tests: [integrity catalogue](docs/lectures/lecture02.md), [post-contract tests](database/postgres/experiments/lecture02/lecture02_constraints.sql)
 
-Lecture 3: reporting experiment and comparison: [reporting guide](docs/lecture03.md), [experiment](database/postgres/experiments/lecture03_reporting.sql), [query](database/postgres/queries/lecture03_revenue.sql)
+Lecture 3: reporting experiment and comparison: [reporting guide](docs/lectures/lecture03.md), [experiment](database/postgres/experiments/lecture03/lecture03_reporting.sql), [query](database/postgres/queries/lecture03_revenue.sql)
 
-Lecture 4: migration stages and verification: [migration guide](docs/lecture04.md), [compatibility experiment](database/postgres/experiments/lecture04_compatibility.sql), [migration experiment](database/postgres/experiments/lecture04_product_identity.sql)
+Lecture 4: migration stages and verification: [migration guide](docs/lectures/lecture04.md), [compatibility experiment](database/postgres/experiments/lecture04/lecture04_compatibility.sql), [migration experiment](database/postgres/experiments/lecture04/lecture04_product_identity.sql)
 
 ## Two decisions worth discussing
 
@@ -129,7 +132,7 @@ What was the alternative? Treating each stop ID as unique within a route.
 
 Why does our choice fit MobilityTicketing? A route may visit the same stop more than once, while sequence gives deterministic ordering for timetable and route display queries.
 
-Which file or result supports it? [ER model and schema](docs/dossier.md) and [ordered-stops query](database/postgres/003_queries.sql).
+Which file or result supports it? [ER model and schema](docs/dossier.md) and [ordered-stops query](database/postgres/queries/lecture01_queries.sql).
 
 ### Decision 2
 
@@ -139,12 +142,12 @@ What was the alternative? Hiding reporting responsibility in one unexamined repo
 
 Why does our choice fit MobilityTicketing? The direct query is the correctness reference; materialized views suit scheduled reports, while the trigger summary suits frequent low-latency reads when its write cost is justified.
 
-Which file or result supports it? [reporting comparison](docs/lecture03.md) and [staleness experiment](database/postgres/experiments/lecture03_reporting.sql).
+Which file or result supports it? [reporting comparison](docs/lectures/lecture03.md) and [staleness experiment](database/postgres/experiments/lecture03/lecture03_reporting.sql).
 
 ## One limitation or open question
 
 What does the implementation not guarantee? PostgreSQL constraints cannot make an external payment operation and a PostgreSQL transaction atomically consistent.
 
-Which evidence documents the boundary? [integrity catalogue](docs/lecture02.md).
+Which evidence documents the boundary? [integrity catalogue](docs/lectures/lecture02.md).
 
 What should be checked or implemented next? Add an integration reconciliation and idempotency design for the external payment provider, while retaining database constraints for local invariants.
