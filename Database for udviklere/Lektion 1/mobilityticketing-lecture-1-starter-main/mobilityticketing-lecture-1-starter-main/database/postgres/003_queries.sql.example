@@ -1,0 +1,36 @@
+-- Query 1: upcoming trips
+select
+    t.id,
+    t.scheduled_departure_utc,
+    t.status
+from trips t
+where t.route_id = :route_id
+  and t.scheduled_departure_utc >= :after_utc
+order by t.scheduled_departure_utc
+limit 20;
+
+-- Query 2: ordered route stops
+-- TODO: join route_stops to stops and order by stop_sequence.
+
+	select route_stops.route_id, route_stops.name, route_stops.stop_sequence 
+	from route_stops 
+	left join stops on stops.id = route_stops.name
+	order by route_stops.stop_sequence
+
+-- Query 3: routes and trip count, including routes with zero trips
+-- TODO: preserve routes with no matching trips for the supplied service date.
+	
+	SELECT
+    routes.route_id,
+    COUNT(t.id) AS trip_count
+FROM (
+    VALUES
+        ('LINE-M2'),
+        ('LINE-5C'),
+        ('LINE-M3')
+) AS routes(route_id)
+LEFT JOIN trips t
+    ON t.route_id = routes.route_id
+    AND t.service_date = '2026-09-1'
+GROUP BY routes.route_id
+ORDER BY routes.route_id;
