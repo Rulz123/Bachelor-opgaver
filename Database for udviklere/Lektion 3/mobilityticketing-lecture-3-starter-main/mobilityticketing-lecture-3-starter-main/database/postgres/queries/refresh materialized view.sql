@@ -1,0 +1,1 @@
+refresh materialized view daily_captured_revenue

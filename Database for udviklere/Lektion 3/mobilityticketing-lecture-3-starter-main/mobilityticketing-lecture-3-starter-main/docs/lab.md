@@ -26,9 +26,22 @@ Run the base query in [`../database/postgres/queries/base_revenue.sql`](../datab
 ## Tasks
 
 1. Run the reference revenue query and verify its result from the base tables.
+
+the sql calculation is the most consistent, but also the heaviest, as it relies on alot of scripts to look into different tables for different rows.
+
 2. Wrap the read logic in a SQL function.
+
+The function makes it easier to use all around, but has a few problems with duplicates in the display.
+
 3. Create a materialized view and observe when it becomes stale.
+
+Materialized view is not the best if you want responsiveness, but it is easy to reuse. The downside is the constant refreshing when it has to be used. There is a high likelyhood of getting old data that is not correct anymore.
+
 4. Create the supplied trigger-maintained summary.
+
+The trigger is good for updating the field per operator, and makes it so it is live data, but it doesn't show collective data, only for that one operator.
+The trigger does only listen for captured entries, so it might retain old data from refunds.
+
 5. Test all four approaches against:
    - a captured payment insert;
    - a failed payment insert;
@@ -38,6 +51,8 @@ Run the base query in [`../database/postgres/queries/base_revenue.sql`](../datab
    - duplicate delivery of the same external payment reference.
 6. Produce a responsibility matrix comparing correctness, freshness, write cost, read cost, hidden side effects, rebuildability, and operational complexity.
 7. Recommend one approach for the current case. A hybrid answer is allowed, but each stored copy must have a clear authority and rebuild path.
+
+For maximum fresh data, i would probably use the base revenue call with calculation in it. The computation and server useage is the highest in this, but it takes into account all of the different scenarios, and is the only method that is 100% correct to the data.
 
 The migration examples identify the intended object names. Complete them in dependency order and apply them from the repository root:
 
@@ -66,6 +81,8 @@ docker compose up -d
 ## Side-effect trace
 
 For one `INSERT INTO payments`, record:
+
+Side effects can be traced in the picture folder. There is pictures for the different steps, numbered after the case number.
 
 1. constraints or references checked;
 2. trigger execution, if any;

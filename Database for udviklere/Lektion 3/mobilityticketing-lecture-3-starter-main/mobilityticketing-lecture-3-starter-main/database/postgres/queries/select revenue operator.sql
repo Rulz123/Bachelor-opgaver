@@ -1,0 +1,1 @@
+select * from daily_revenue_by_operator

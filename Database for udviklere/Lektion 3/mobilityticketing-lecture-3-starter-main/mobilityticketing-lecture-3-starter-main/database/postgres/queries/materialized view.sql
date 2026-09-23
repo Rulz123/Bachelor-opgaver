@@ -1,0 +1,1 @@
+select * from public.daily_captured_revenue
