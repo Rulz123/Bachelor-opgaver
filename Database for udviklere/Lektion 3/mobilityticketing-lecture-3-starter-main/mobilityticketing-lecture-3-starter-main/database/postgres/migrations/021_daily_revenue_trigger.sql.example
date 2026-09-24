@@ -46,5 +46,15 @@ after insert on payments
 for each row
 execute function add_inserted_payment_to_daily_revenue();
 
+create trigger payments_daily_revenue_after_delete
+after deletes on payments
+for each row
+execute function add_inserted_payment_to_daily_revenue();
+
+create trigger payments_daily_revenue_after_update
+after update on payments
+for each row
+execute function add_inserted_payment_to_daily_revenue();
+
 -- TODO: analyse corrections, refunds, deletes, initial backfill, and duplicate delivery.
 -- Do not add more trigger branches before documenting the behaviour.

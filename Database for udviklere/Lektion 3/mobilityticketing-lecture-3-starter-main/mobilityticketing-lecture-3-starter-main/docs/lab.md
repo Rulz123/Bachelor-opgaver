@@ -31,16 +31,17 @@ the sql calculation is the most consistent, but also the heaviest, as it relies 
 
 2. Wrap the read logic in a SQL function.
 
-The function makes it easier to use all around, but has a few problems with duplicates in the display.
+The function makes it easier to use all around, but has a few problems with duplicates in the display. It requires alot more work than the others, but seems to be easy to scale. Likely takes a lot more maintenance.
 
 3. Create a materialized view and observe when it becomes stale.
 
-Materialized view is not the best if you want responsiveness, but it is easy to reuse. The downside is the constant refreshing when it has to be used. There is a high likelyhood of getting old data that is not correct anymore.
+Materialized view is not the best if you want responsiveness, but it is easy to reuse. The downside is the constant refreshing when it has to be used. There is a high likelyhood of getting old data that is not correct anymore. Should be used with a trigger to refresh on changes imo.
 
 4. Create the supplied trigger-maintained summary.
 
 The trigger is good for updating the field per operator, and makes it so it is live data, but it doesn't show collective data, only for that one operator.
 The trigger does only listen for captured entries, so it might retain old data from refunds.
+Very good for full automation, but requires a bit of maintenance. Works well with functions to add more complex work.
 
 5. Test all four approaches against:
    - a captured payment insert;
@@ -52,7 +53,11 @@ The trigger does only listen for captured entries, so it might retain old data f
 6. Produce a responsibility matrix comparing correctness, freshness, write cost, read cost, hidden side effects, rebuildability, and operational complexity.
 7. Recommend one approach for the current case. A hybrid answer is allowed, but each stored copy must have a clear authority and rebuild path.
 
-For maximum fresh data, i would probably use the base revenue call with calculation in it. The computation and server useage is the highest in this, but it takes into account all of the different scenarios, and is the only method that is 100% correct to the data.
+Depending on the current servers performance, i would choose a few different things. 
+
+If there is alot of performance, i would likely go with the trigger and functions way. It is full automation, but has some maintenance when changes will happen. Can easily be worked around, and can be stored as old procedures for back rolling.
+
+If the performance is not the best, i would go with the materialized view with a refresh trigger. 
 
 The migration examples identify the intended object names. Complete them in dependency order and apply them from the repository root:
 
