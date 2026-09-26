@@ -3,3 +3,42 @@
 -- currency in the insert. Use a fresh ticket ID and ticket code.
 -- Test after removing the old column. If you try it while that column still
 -- exists, check whether its NOT NULL constraint allows the insert.
+
+
+-- TODO: Write a function or parameterized insert that accepts a product ID.
+-- Look up its code and store both references on the ticket.
+-- Use old_writer.sql as a guide to the other required ticket fields.
+-- Keep the agreed price as an input; do not copy the current catalogue price.
+-- Test an unknown ID and a supplied code belonging to another product.
+
+WITH vars AS (
+    SELECT
+        'LAB04-FINAL-1'::text AS ticket_id,
+        'LAB04-CODE-FINAL-1'::text AS ticket_code
+)
+INSERT INTO tickets (
+    id,
+    user_id,
+    trip_id,
+    ticket_code,
+    status,    
+    valid_from_utc,
+    valid_to_utc,
+    price,
+    currency,
+	product_id
+)
+SELECT
+    vars.ticket_id,
+    t.user_id,
+    t.trip_id,
+    vars.ticket_code,
+    t.status, 
+    t.valid_from_utc,
+    t.valid_to_utc,
+    t.price,
+    t.currency,
+	t.product_id
+FROM tickets t
+CROSS JOIN vars
+WHERE t.id = 'TICKET-1';

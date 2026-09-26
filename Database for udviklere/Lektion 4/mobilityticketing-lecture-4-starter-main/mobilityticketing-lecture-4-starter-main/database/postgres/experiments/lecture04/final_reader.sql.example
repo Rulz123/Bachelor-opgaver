@@ -3,3 +3,10 @@
 select t.id, t.product_id, t.price, t.currency
 from tickets t
 order by t.id;
+
+
+select t.id, t.product_id, t.price, t.currency
+from tickets t
+left join Products p
+on p.product_id = t.product_id
+order by t.id;

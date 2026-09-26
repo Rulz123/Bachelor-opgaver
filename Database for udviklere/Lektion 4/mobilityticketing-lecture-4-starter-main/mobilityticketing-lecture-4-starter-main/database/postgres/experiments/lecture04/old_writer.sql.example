@@ -9,3 +9,39 @@ select :'ticket_id', user_id, trip_id, :'ticket_code', status, product_code,
        valid_from_utc, valid_to_utc, price, currency
 from tickets
 where id = 'TICKET-1';
+
+
+--^Doesn't work, the script underneath works
+
+
+WITH vars AS (
+    SELECT
+        'LAB04-OLD-1'::text AS ticket_id,
+        'LAB04-CODE-OLD-1'::text AS ticket_code
+)
+INSERT INTO tickets (
+    id,
+    user_id,
+    trip_id,
+    ticket_code,
+    status,
+    product_code,
+    valid_from_utc,
+    valid_to_utc,
+    price,
+    currency
+)
+SELECT
+    vars.ticket_id,
+    t.user_id,
+    t.trip_id,
+    vars.ticket_code,
+    t.status,
+    t.product_code,
+    t.valid_from_utc,
+    t.valid_to_utc,
+    t.price,
+    t.currency
+FROM tickets t
+CROSS JOIN vars
+WHERE t.id = 'TICKET-1';

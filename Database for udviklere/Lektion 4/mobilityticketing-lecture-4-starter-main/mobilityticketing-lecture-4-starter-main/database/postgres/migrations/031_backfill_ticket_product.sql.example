@@ -3,4 +3,8 @@
 -- Match the existing product code and preserve assigned IDs and historical prices.
 -- The second run must change zero rows.
 
--- TODO: repeatable UPDATE.
+UPDATE tickets AS t
+SET product_id = p.product_id
+FROM products AS p
+WHERE t.product_code = p.code
+  AND t.product_id IS NULL;

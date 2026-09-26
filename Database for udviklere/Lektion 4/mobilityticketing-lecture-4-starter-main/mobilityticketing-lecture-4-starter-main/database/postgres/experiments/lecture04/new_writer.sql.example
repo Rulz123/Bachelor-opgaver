@@ -6,3 +6,36 @@ select id, code, price, currency from products order by code;
 -- Use old_writer.sql as a guide to the other required ticket fields.
 -- Keep the agreed price as an input; do not copy the current catalogue price.
 -- Test an unknown ID and a supplied code belonging to another product.
+
+
+WITH vars AS (
+    SELECT
+        'LAB04-Test-1'::text AS ticket_id,
+        'LAB04-CODE-Test-1'::text AS ticket_code
+)
+INSERT INTO tickets (
+    id,
+    user_id,
+    trip_id,
+    ticket_code,
+    status,
+    product_code,
+    valid_from_utc,
+    valid_to_utc,
+    price,
+    currency
+)
+SELECT
+    vars.ticket_id,
+    t.user_id,
+    t.trip_id,
+    vars.ticket_code,
+    t.status,
+    t.product_code,
+    t.valid_from_utc,
+    t.valid_to_utc,
+    t.price,
+    t.currency
+FROM tickets t
+CROSS JOIN vars
+WHERE t.id = 'TICKET-1';

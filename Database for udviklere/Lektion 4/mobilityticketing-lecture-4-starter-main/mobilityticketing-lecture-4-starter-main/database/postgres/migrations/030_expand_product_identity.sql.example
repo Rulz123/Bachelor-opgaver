@@ -3,9 +3,65 @@
 -- Add the nullable ticket reference and a NOT VALID foreign key.
 -- Keep the original product code contract usable.
 
-begin;
-set local lock_timeout = '3s';
+BEGIN;
 
--- TODO: migration DDL.
+SET LOCAL lock_timeout = '3s';
 
-commit;
+-- 1. Give every product a permanent UUID identity.
+ALTER TABLE products
+    ADD COLUMN product_id uuid;
+
+UPDATE products
+SET product_id = gen_random_uuid()
+WHERE product_id IS NULL;
+
+ALTER TABLE products
+    ALTER COLUMN product_id SET NOT NULL;
+
+ALTER TABLE products
+    ADD CONSTRAINT products_product_id_key UNIQUE (product_id);
+
+
+-- 2. Add the new ticket reference.
+ALTER TABLE tickets
+    ADD COLUMN product_id uuid;
+
+
+
+-- 3. Keep old applications working:
+--    writes to product_code automatically populate product_id.
+CREATE OR REPLACE FUNCTION tickets_set_product_id()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.product_code IS NOT NULL THEN
+        SELECT p.product_id
+        INTO NEW.product_id
+        FROM products AS p
+        WHERE p.code = NEW.product_code;
+
+        IF NEW.product_id IS NULL THEN
+            RAISE EXCEPTION 'Unknown product_code: %', NEW.product_code;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER tickets_product_code_compat
+BEFORE INSERT OR UPDATE OF product_code
+ON tickets
+FOR EACH ROW
+EXECUTE FUNCTION tickets_set_product_id();
+
+
+-- 4. Add the FK without validating existing rows.
+ALTER TABLE tickets
+    ADD CONSTRAINT tickets_product_id_fkey
+    FOREIGN KEY (product_id)
+    REFERENCES products (product_id)
+    NOT VALID;
+
+COMMIT;

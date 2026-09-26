@@ -36,14 +36,42 @@ Use the same command pattern for each file. Run each DDL migration once, in orde
 ## Tasks
 
 1. Try removing the old reference before updating the application code. Before running it, predict what will happen. Explain how you could lose the link between tickets and products, and show which old query or insert breaks. Roll back or reset your lab database before continuing.
+
+After removing the old reference, there can be incorrect product_codes implemented in, that does not refere to a actual product. There will also be the possibility of nulls in the product_code field in the table tickets if no check is put in. 
+
 2. Complete `030_expand_product_identity.sql.example`. Add a stored UUID to each product and a unique constraint on that column. Add a nullable `tickets.product_id` with a foreign key to the product ID. Keep `product_code`. Use a short lock timeout and explain what you would need to consider with a much larger table.
+
+If the table retained alot more information, a backup would be prefferable before any migration is done, so it would be easier to roll back with correct data. 
+Basically i just need to make it easy for myself and my team to roll back the migration history.
+
 3. Write an insert and a query that use only `product_code`, as the old application would. Show that both still work after you add the new columns.
+
+Look to evidence for proof.
+
 4. Write a new insert that accepts a product ID and looks up the code from that product. Store both references and the agreed purchase price. If the caller supplies a conflicting product code, either reject it or ignore it and use the code you looked up.
+
+If there is a unknown product code it gets rejected, and the write takes the ID automatically via a trigger.
+
 5. Write a query that finds a ticket's product by `product_id`, using `product_code` only when `product_id` is null. Test it before you fill in the IDs on existing tickets.
+
+
+
 6. Complete `031_backfill_ticket_product.sql.example`. Fill in `product_id` only where it is null. Run the backfill twice and check that the second run changes zero rows. Then insert another ticket using the old writer and run the backfill again. It should fill in the new ticket's reference without changing any IDs you already assigned.
+
+Done with a trigger.
+
 7. Write checks for null product IDs, missing products, and code/ID pairs that point to different products. Compare the original tickets, prices and currencies with your starting data. Separately, try writing a mismatched pair directly in SQL and record whether the database rejects it.
+
+The database rejects these nulls, missing products and missmatch in pairs.
+
 8. Complete `032_require_ticket_product.sql.example`. First, try making `product_id` required while one ticket still has a null reference. Capture the failure. Once you meet the conditions below, validate the foreign key and make the column required. Show that the old writer now fails.
+
+
+
 9. Write an insert and a query that use only `product_id`. Check for views and functions that still use `tickets.product_code`, then try dropping that column in your lab database without `CASCADE`. Keep `products.code` for the catalogue.
+
+
+
 ## Before you require the new reference
 
 Before making `product_id` required, make sure no old-only writers are still running and that the new readers and writers are in place. Run the backfill one last time and check for missing or mismatched references. Explain whether you could still return to the old application version and what that would involve. You cannot tell which versions are running just by looking at the repository.

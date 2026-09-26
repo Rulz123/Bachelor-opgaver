@@ -4,3 +4,14 @@
 select t.id, t.product_code, t.product_id, t.price, t.currency
 from tickets t
 order by t.id;
+
+SELECT
+    t.*,
+    p.product_id AS resolved_product_id
+FROM tickets t
+LEFT JOIN products p
+    ON p.product_id = t.product_id
+    OR (
+        t.product_id IS NULL
+        AND p.code = t.product_code
+    );
