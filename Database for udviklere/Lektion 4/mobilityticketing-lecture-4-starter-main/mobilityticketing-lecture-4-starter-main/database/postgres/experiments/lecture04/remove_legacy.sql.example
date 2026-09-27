@@ -2,6 +2,10 @@
 begin;
 set local lock_timeout = '3s';
 
+-- Removes old function.
+ALTER TABLE tickets
+    DROP CONSTRAINT tickets_set_product_id();
+
 -- TODO: Inspect views and functions that use tickets.product_code.
 -- Update or remove those dependencies deliberately.
 -- Drop the column without CASCADE and test your final reader and writer.
@@ -9,3 +13,6 @@ set local lock_timeout = '3s';
 rollback;
 -- Keep this rehearsal reversible. Record what would need to happen before
 -- you committed the same change in a real rollout.
+
+The function that returns a trigger will have to be dropped on tickets, but otherwise it won't be much else that needs changing. 
+It tested fine with and without product_code.
