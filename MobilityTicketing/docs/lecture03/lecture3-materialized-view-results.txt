@@ -1,0 +1,9 @@
+﻿set timezone = 'UTC'; refresh materialized view daily_captured_revenue; select * from daily_captured_revenue order by operator_id, revenue_date;
+SET
+REFRESH MATERIALIZED VIEW
+ operator_id | revenue_date | captured_amount | captured_payments 
+-------------+--------------+-----------------+-------------------
+ OP-BUS      | 2026-04-29   |           36.00 |                 1
+ OP-METRO    | 2026-04-29   |           36.00 |                 1
+(2 rows)
+

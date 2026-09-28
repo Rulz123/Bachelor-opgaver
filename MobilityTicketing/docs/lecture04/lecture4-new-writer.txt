@@ -1,0 +1,6 @@
+﻿     id      | product_code |              product_id              | price | currency 
+-------------+--------------+--------------------------------------+-------+----------
+ LAB04-NEW-1 | DAY          | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d |    65 | DKK
+(1 row)
+
+INSERT 0 1

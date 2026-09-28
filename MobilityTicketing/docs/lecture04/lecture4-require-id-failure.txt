@@ -1,0 +1,23 @@
+﻿BEGIN
+UPDATE 1
+REQUIRE ID TOO EARLY -- expect SQLSTATE 23502
+docker : psql:/docker-entrypoint-initdb.d/experiments/lecture04/require_id_failure.sql:13: ERROR:  column "product_id" of relation "tickets" contains null values
+At line:1 char:1
++ docker compose exec -T postgres psql -U mobility -d mobility -P pager ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (psql:/docker-en...ins null values:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Actual SQLSTATE: 23502
+ROLLBACK
+ORIGINAL VALID DATA RESTORED
+REFERENCE PROBLEMS -- expect zero rows
+ id | product_code | product_id 
+----+--------------+------------
+(0 rows)
+
+ORIGINAL TICKET CHANGES -- expect zero rows
+ id | expected_product | actual_product | expected_price | actual_price | expected_currency | actual_currency 
+----+------------------+----------------+----------------+--------------+-------------------+-----------------
+(0 rows)
+

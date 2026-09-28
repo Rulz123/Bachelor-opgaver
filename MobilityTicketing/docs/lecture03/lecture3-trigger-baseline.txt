@@ -1,0 +1,7 @@
+﻿select * from daily_revenue_by_operator order by operator_id, revenue_date;
+ operator_id | revenue_date | captured_amount | captured_payments 
+-------------+--------------+-----------------+-------------------
+ OP-BUS      | 2026-04-29   |           36.00 |                 1
+ OP-METRO    | 2026-04-29   |           36.00 |                 1
+(2 rows)
+

@@ -1,0 +1,61 @@
+﻿PUBLIC VIEWS MENTIONING PRODUCT_CODE
+ viewname | definition 
+----------+------------
+(0 rows)
+
+PUBLIC MATERIALIZED VIEWS MENTIONING PRODUCT_CODE
+ matviewname | definition 
+-------------+------------
+(0 rows)
+
+PUBLIC FUNCTIONS MENTIONING PRODUCT_CODE
+ proname | pg_get_functiondef 
+---------+--------------------
+(0 rows)
+
+BEGIN
+SET
+REMOVE OLD REFERENCE WITHOUT CASCADE
+ALTER TABLE
+TEST ID-ONLY WRITER
+      id       |              product_id              | price | currency 
+---------------+--------------------------------------+-------+----------
+ LAB04-FINAL-1 | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d |    65 | DKK
+(1 row)
+
+INSERT 0 1
+TEST ID-ONLY READER
+       id       |              product_id              | product_code | price | currency 
+----------------+--------------------------------------+--------------+-------+----------
+ LAB04-FINAL-1  | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d | DAY          |    65 | DKK
+ LAB04-NEW-1    | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d | DAY          |    65 | DKK
+ LAB04-OLD-1    | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ LAB04-OLD-LATE | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ TICKET-1       | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ TICKET-2       | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ TICKET-3       | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d | DAY          | 65.00 | DKK
+(7 rows)
+
+ROLLBACK
+AFTER ROLLBACK -- ORIGINAL SIX TICKETS
+       id       |              product_id              | product_code | price | currency 
+----------------+--------------------------------------+--------------+-------+----------
+ LAB04-NEW-1    | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d | DAY          |    65 | DKK
+ LAB04-OLD-1    | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ LAB04-OLD-LATE | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ TICKET-1       | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ TICKET-2       | 8800620a-a214-46d9-950b-c7d08c5bdf6f | SINGLE       | 36.00 | DKK
+ TICKET-3       | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d | DAY          | 65.00 | DKK
+(6 rows)
+
+OLD COLUMN AND ORIGINAL VALUES RESTORED
+REFERENCE PROBLEMS -- expect zero rows
+ id | product_code | product_id 
+----+--------------+------------
+(0 rows)
+
+ORIGINAL TICKET CHANGES -- expect zero rows
+ id | expected_product | actual_product | expected_price | actual_price | expected_currency | actual_currency 
+----+------------------+----------------+----------------+--------------+-------------------+-----------------
+(0 rows)
+

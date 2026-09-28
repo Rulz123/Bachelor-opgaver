@@ -1,0 +1,12 @@
+﻿set timezone = 'UTC'; select * from captured_revenue_for_day('OP-METRO', date '2026-04-29'); select * from captured_revenue_for_day('OP-METRO', date '2026-04-30');
+SET
+ captured_amount | captured_payments 
+-----------------+-------------------
+           36.00 |                 1
+(1 row)
+
+ captured_amount | captured_payments 
+-----------------+-------------------
+               0 |                 0
+(1 row)
+

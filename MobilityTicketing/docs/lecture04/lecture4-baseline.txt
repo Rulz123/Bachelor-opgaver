@@ -1,0 +1,17 @@
+﻿ current_database 
+------------------
+ mobility
+(1 row)
+
+    id    | product_code | price | currency 
+----------+--------------+-------+----------
+ TICKET-1 | SINGLE       | 36.00 | DKK
+ TICKET-2 | SINGLE       | 36.00 | DKK
+ TICKET-3 | DAY          | 65.00 | DKK
+(3 rows)
+
+ id | product_code 
+----+--------------
+(0 rows)
+
+DO

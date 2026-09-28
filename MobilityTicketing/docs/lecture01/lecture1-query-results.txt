@@ -1,0 +1,52 @@
+﻿-- Query 1: next 20 scheduled trips for a route.
+-- Example inputs: LINE-M2, at or after 08:30 UTC.
+select id, route_id, scheduled_departure_utc
+from trips
+where route_id = 'LINE-M2'
+  and scheduled_departure_utc >= '2026-09-22 08:30:00+00'
+  and status = 'Scheduled'
+order by scheduled_departure_utc
+limit 20;
+     id      | route_id | scheduled_departure_utc 
+-------------+----------+-------------------------
+ TRIP-M2-002 | LINE-M2  | 2026-09-22 09:00:00+00
+(1 row)
+
+
+-- Query 2: stops for a route in travel order.
+select rs.stop_sequence, s.name
+from route_stops rs
+join stops s on rs.stop_id = s.id
+where rs.route_id = 'LINE-M2'
+order by rs.stop_sequence;
+ stop_sequence |        name        
+---------------+--------------------
+             1 | Nørreport
+             2 | Kongens Nytorv
+             3 | Copenhagen Airport
+(3 rows)
+
+
+-- Query 3: scheduled trips per route on a supplied service date.
+-- Keep routes with no matching trips.
+select r.id, count(t.id) as trip_count
+from routes r
+left join trips t
+    on t.route_id = r.id
+   and t.service_date = '2026-09-22'
+   and t.status = 'Scheduled'
+group by r.id
+order by r.id;
+   id    | trip_count 
+---------+------------
+ LINE-5C |          2
+ LINE-M2 |          2
+(2 rows)
+
+select r.id, count(t.id) as trip_count from routes r left join trips t on t.route_id = r.id and t.service_date = '2026-09-23' and t.status = 'Scheduled' group by r.id order by r.id;
+   id    | trip_count 
+---------+------------
+ LINE-5C |          0
+ LINE-M2 |          0
+(2 rows)
+
