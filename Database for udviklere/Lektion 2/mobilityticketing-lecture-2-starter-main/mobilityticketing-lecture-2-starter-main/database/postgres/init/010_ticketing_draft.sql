@@ -45,7 +45,7 @@ create table validations (
     id text primary key,
     ticket_id text not null,
     ticket_code text not null references tickets(ticket_code),
-    vehicle_id text not null references ,
+    vehicle_id text not null,
     stop_id text not null references stops(stop_id),
     device_id text,
     result text,
