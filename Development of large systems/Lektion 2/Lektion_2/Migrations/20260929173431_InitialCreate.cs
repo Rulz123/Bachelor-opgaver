@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -14,11 +15,12 @@ namespace Lektion_2.Migrations
                 name: "Articles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ArticleTitle = table.Column<string>(type: "TEXT", nullable: false),
-                    ArticleContent = table.Column<string>(type: "TEXT", nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "BLOB", rowVersion: true, nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ArticleTitle = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ArticleContent = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Continent = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {

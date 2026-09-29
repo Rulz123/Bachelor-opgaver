@@ -9,6 +9,6 @@ public class Article
     public int Id {get;set;}
     public string ArticleTitle {get;set;}
     public string ArticleContent {get;set;}
-    [Timestamp]
-    public byte[] RowVersion {get;set;}
+    public string Continent {get;set;}
+    public DateTime CreatedAt {get;set;} = DateTime.Now;   
 }

@@ -6,13 +6,19 @@ namespace Lektion_2.Controllers;
 [Route("[controller]")]
 public class ArticleController : ControllerBase
 {
-    ArticleContext db =new ArticleContext();
+    private readonly ArticleDBContext _context;
+
+    public ArticleController(ArticleDBContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet(Name = "GetArticles")]
     public IEnumerable<Article> GetArticles()
     {
         var articleService = new ArticleService.ArticleService();
-        db.Find<Article>(1);
+        articleService.GetAllArticles().ToList()
+            .ForEach(article => _context.Add(article));
         return articleService.GetAllArticles();
     }
 
@@ -21,8 +27,8 @@ public class ArticleController : ControllerBase
     {
         var articleService = new ArticleService.ArticleService();
         articleService.AddArticle(article);
-        db.Add(article);
-        db.SaveChanges();
+        _context.Add(article);
+        _context.SaveChanges();
     }
 
     [HttpDelete(Name = "DeleteArticle")]
@@ -30,8 +36,8 @@ public class ArticleController : ControllerBase
     {
         var articleService = new ArticleService.ArticleService();
         articleService.DeleteArticle(article);
-        db.Remove(article);
-        db.SaveChanges();
+        _context.Remove(article);
+        _context.SaveChanges();
     }
 
     [HttpPut(Name = "UpdateArticle")]
@@ -39,7 +45,7 @@ public class ArticleController : ControllerBase
     {
         var articleService = new ArticleService.ArticleService();
         articleService.UpdateArticle(article);
-        db.Update(article);
-        db.SaveChanges();
+        _context.Update(article);
+        _context.SaveChanges();
     }
 }
