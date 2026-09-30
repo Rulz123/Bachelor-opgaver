@@ -1,11 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Lektion_2.ArticleService;
+using Microsoft.EntityFrameworkCore;
 namespace Lektion_2.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class ArticleController : ControllerBase
 {
+    private static HttpClient sharedClient = new()
+    {
+        BaseAddress = new Uri("https://jsonplaceholder.typicode.com"),
+    };
     private readonly ArticleDBContext _context;
 
     public ArticleController(ArticleDBContext context)
@@ -14,37 +19,43 @@ public class ArticleController : ControllerBase
     }
 
     [HttpGet(Name = "GetArticles")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IEnumerable<Article> GetArticles()
     {
-        var articleService = new ArticleService.ArticleService();
-        articleService.GetAllArticles().ToList()
-            .ForEach(article => _context.Add(article));
-        return articleService.GetAllArticles();
+        return _context.Articles.ToList();
     }
 
     [HttpPost(Name = "AddArticle")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public void AddArticle(Article article)
     {
-        var articleService = new ArticleService.ArticleService();
-        articleService.AddArticle(article);
         _context.Add(article);
         _context.SaveChanges();
     }
 
-    [HttpDelete(Name = "DeleteArticle")]
-    public void DeleteArticle(Article article)
+    [HttpDelete("{id}", Name = "DeleteArticle")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult DeleteArticle(int id)
     {
-        var articleService = new ArticleService.ArticleService();
-        articleService.DeleteArticle(article);
-        _context.Remove(article);
+        var article = _context.Articles.Find(id);
+
+        if (article == null)
+            return NotFound();
+
+        _context.Articles.Remove(article);
         _context.SaveChanges();
+
+        return NoContent();
     }
 
     [HttpPut(Name = "UpdateArticle")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public void UpdateArticle(Article article)
     {
-        var articleService = new ArticleService.ArticleService();
-        articleService.UpdateArticle(article);
         _context.Update(article);
         _context.SaveChanges();
     }

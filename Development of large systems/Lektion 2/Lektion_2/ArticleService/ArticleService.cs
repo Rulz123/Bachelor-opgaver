@@ -9,9 +9,16 @@ public class ArticleService : IArticleService
         _articles.Add(article);
     }
 
-    public void DeleteArticle(Article article)
+    public Task DeleteArticle(int id)
     {
-        _articles.Remove(article);
+        var article = _articles.FirstOrDefault(a => a.Id == id);
+
+        if (article != null)
+        {
+            _articles.Remove(article);
+        }
+
+        return Task.CompletedTask;
     }
 
     public void UpdateArticle(Article article)

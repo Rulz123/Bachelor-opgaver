@@ -1,6 +1,6 @@
 @Lektion_2_HostAddress = http://localhost:5008
 
-GET {{Lektion_2_HostAddress}}/weatherforecast/
+GET {{Lektion_2_HostAddress}}/GetArticles/
 Accept: application/json
 
 ###
