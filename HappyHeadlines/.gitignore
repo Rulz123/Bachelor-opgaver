@@ -1,0 +1,5 @@
+docs/architecture/.structurizr/
+docs/architecture/workspace.json
+.env
+.env.*
+!.env.example

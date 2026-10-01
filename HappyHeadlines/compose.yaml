@@ -1,0 +1,401 @@
+services:
+  structurizr:
+    image: structurizr/structurizr@sha256:251905a1a2d73195e84b784966babc71b329223fdbb25368261a9e3ba39041c4
+    command: local
+    user: "1000:1000"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docs/architecture:/usr/local/structurizr
+
+  nginx:
+    image: nginx:1.27.2-alpine
+    ports:
+      - "8081:80"
+    depends_on:
+      article-service-1:
+        condition: service_healthy
+      article-service-2:
+        condition: service_healthy
+      article-service-3:
+        condition: service_healthy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  comment-service:
+    build:
+      context: .
+      dockerfile: src/CommentService/Dockerfile
+      network: host
+    ports:
+      - "8082:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      INSTANCE_NAME: comment-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      PROFANITY_SERVICE_URL: http://profanity-service:8080
+      PROFANITY_TIMEOUT_MS: 250
+      PROFANITY_MAX_ATTEMPTS: 3
+      PROFANITY_FAILURE_THRESHOLD: 3
+      PROFANITY_BREAK_SECONDS: 5
+      ConnectionStrings__CommentDatabase: "Host=comment-db;Port=5432;Database=comments;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    depends_on:
+      comment-db:
+        condition: service_healthy
+      profanity-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  profanity-service:
+    build:
+      context: .
+      dockerfile: src/ProfanityService/Dockerfile
+      network: host
+    ports:
+      - "8083:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      INSTANCE_NAME: profanity-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      BLOCKED_WORDS: spam,scam
+      ConnectionStrings__ProfanityDatabase: "Host=profanity-db;Port=5432;Database=profanity;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    depends_on:
+      profanity-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  comment-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: comments
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - comment-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U comments -d comments"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  profanity-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: profanity
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - profanity-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U profanity -d profanity"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  draft-service:
+    build:
+      context: .
+      dockerfile: src/DraftService/Dockerfile
+      network: host
+    ports:
+      - "8084:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      INSTANCE_NAME: draft-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      ConnectionStrings__DraftDatabase: "Host=draft-db;Port=5432;Database=drafts;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    depends_on:
+      draft-db:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  draft-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: drafts
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - draft-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drafts -d drafts"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  publisher-service:
+    build:
+      context: .
+      dockerfile: src/PublisherService/Dockerfile
+      network: host
+    ports:
+      - "8085:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      INSTANCE_NAME: publisher-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      RABBITMQ_HOST: article-queue
+      RABBITMQ_USER: ${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      PROFANITY_SERVICE_URL: http://profanity-service:8080
+    depends_on:
+      profanity-service:
+        condition: service_healthy
+      article-queue:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  newsletter-service:
+    build:
+      context: .
+      dockerfile: src/NewsletterService/Dockerfile
+      network: host
+    ports:
+      - "8086:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      INSTANCE_NAME: newsletter-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      RABBITMQ_HOST: article-queue
+      RABBITMQ_USER: ${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      ConnectionStrings__NewsletterDatabase: "Host=newsletter-db;Port=5432;Database=newsletters;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    depends_on:
+      newsletter-db:
+        condition: service_healthy
+      article-queue:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  newsletter-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: newsletters
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - newsletter-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U newsletters -d newsletters"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  article-queue:
+    image: rabbitmq:3.13-management-alpine
+    hostname: article-queue
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    user: "0:0"
+    ports:
+      - "13133:13133"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - observability-data:/var/lib/otel
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "validate", "--config=/etc/otelcol-contrib/config.yaml"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:14269/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      otel-collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9090/-/healthy"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:?Set GF_SECURITY_ADMIN_USER in .env}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:?Set GF_SECURITY_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  article-service-1: &article-service
+    build:
+      context: .
+      dockerfile: src/ArticleService/Dockerfile
+      network: host
+    environment: &article-environment
+      ASPNETCORE_ENVIRONMENT: Production
+      INSTANCE_NAME: article-service-1
+      ARTICLE_CACHE_REFRESH_INTERVAL_SECONDS: 300
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      RABBITMQ_HOST: article-queue
+      RABBITMQ_USER: ${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      ConnectionStrings__Europe: "Host=europe-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      ConnectionStrings__Asia: "Host=asia-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      ConnectionStrings__Africa: "Host=africa-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      ConnectionStrings__North-America: "Host=north-america-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      ConnectionStrings__South-America: "Host=south-america-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      ConnectionStrings__Australia-Oceania: "Host=australia-oceania-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      ConnectionStrings__Antarctica: "Host=antarctica-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      ConnectionStrings__Global: "Host=global-db;Port=5432;Database=articles;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    depends_on: &database-dependencies
+      europe-db: { condition: service_healthy }
+      asia-db: { condition: service_healthy }
+      africa-db: { condition: service_healthy }
+      north-america-db: { condition: service_healthy }
+      south-america-db: { condition: service_healthy }
+      australia-oceania-db: { condition: service_healthy }
+      antarctica-db: { condition: service_healthy }
+      global-db: { condition: service_healthy }
+      article-queue: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  article-service-2:
+    <<: *article-service
+    environment:
+      <<: *article-environment
+      INSTANCE_NAME: article-service-2
+
+  article-service-3:
+    <<: *article-service
+    environment:
+      <<: *article-environment
+      INSTANCE_NAME: article-service-3
+
+  europe-db: &article-database
+    image: postgres:17-alpine
+    environment: &database-environment
+      POSTGRES_DB: articles
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - europe-data:/var/lib/postgresql/data
+    healthcheck: &database-healthcheck
+      test: ["CMD-SHELL", "pg_isready -U articles -d articles"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  asia-db:
+    <<: *article-database
+    volumes: [asia-data:/var/lib/postgresql/data]
+  africa-db:
+    <<: *article-database
+    volumes: [africa-data:/var/lib/postgresql/data]
+  north-america-db:
+    <<: *article-database
+    volumes: [north-america-data:/var/lib/postgresql/data]
+  south-america-db:
+    <<: *article-database
+    volumes: [south-america-data:/var/lib/postgresql/data]
+  australia-oceania-db:
+    <<: *article-database
+    volumes: [australia-oceania-data:/var/lib/postgresql/data]
+  antarctica-db:
+    <<: *article-database
+    volumes: [antarctica-data:/var/lib/postgresql/data]
+  global-db:
+    <<: *article-database
+    volumes: [global-data:/var/lib/postgresql/data]
+
+volumes:
+  europe-data:
+  asia-data:
+  africa-data:
+  north-america-data:
+  south-america-data:
+  australia-oceania-data:
+  antarctica-data:
+  global-data:
+  comment-data:
+  profanity-data:
+  draft-data:
+  observability-data:
+  newsletter-data:
+  rabbitmq-data:
+  prometheus-data:
+  grafana-data:
