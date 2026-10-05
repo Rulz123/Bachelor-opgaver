@@ -63,6 +63,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton<ArticleDbContextFactory>();
 builder.Services.AddSingleton<ArticleCache>();
 builder.Services.AddHostedService<ArticleCacheWorker>();
+builder.Services.AddSwaggerGen();
 
 var rabbitMqFactory = new ConnectionFactory
 {
@@ -134,6 +135,8 @@ app.Use(async (context, next) =>
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseAuthorization();
