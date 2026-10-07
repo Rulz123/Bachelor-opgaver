@@ -1,0 +1,268 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "NewsletterService/1.0.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.OpenApi": "10.0.12",
+          "OpenTelemetry.Exporter.OpenTelemetryProtocol": "1.19.1",
+          "OpenTelemetry.Extensions.Hosting": "1.19.1",
+          "OpenTelemetry.Instrumentation.AspNetCore": "1.19.0",
+          "OpenTelemetry.Instrumentation.Http": "1.19.0",
+          "RabbitMQ.Client": "7.2.2",
+          "Swashbuckle.AspNetCore": "10.0.1"
+        },
+        "runtime": {
+          "NewsletterService.dll": {}
+        }
+      },
+      "Microsoft.AspNetCore.OpenApi/10.0.12": {
+        "dependencies": {
+          "Microsoft.OpenApi": "2.12.0"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {
+            "assemblyVersion": "10.0.12.0",
+            "fileVersion": "10.0.1226.42308"
+          }
+        }
+      },
+      "Microsoft.OpenApi/2.12.0": {
+        "runtime": {
+          "lib/net8.0/Microsoft.OpenApi.dll": {
+            "assemblyVersion": "2.12.0.0",
+            "fileVersion": "2.12.0.0"
+          }
+        }
+      },
+      "OpenTelemetry/1.19.1": {
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.19.1"
+        },
+        "runtime": {
+          "lib/net10.0/OpenTelemetry.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.19.1.2198"
+          }
+        }
+      },
+      "OpenTelemetry.Api/1.19.1": {
+        "runtime": {
+          "lib/net10.0/OpenTelemetry.Api.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.19.1.2198"
+          }
+        }
+      },
+      "OpenTelemetry.Api.ProviderBuilderExtensions/1.19.1": {
+        "dependencies": {
+          "OpenTelemetry.Api": "1.19.1"
+        },
+        "runtime": {
+          "lib/net10.0/OpenTelemetry.Api.ProviderBuilderExtensions.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.19.1.2198"
+          }
+        }
+      },
+      "OpenTelemetry.Exporter.OpenTelemetryProtocol/1.19.1": {
+        "dependencies": {
+          "OpenTelemetry": "1.19.1"
+        },
+        "runtime": {
+          "lib/net10.0/OpenTelemetry.Exporter.OpenTelemetryProtocol.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.19.1.2198"
+          }
+        }
+      },
+      "OpenTelemetry.Extensions.Hosting/1.19.1": {
+        "dependencies": {
+          "OpenTelemetry": "1.19.1"
+        },
+        "runtime": {
+          "lib/net10.0/OpenTelemetry.Extensions.Hosting.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.19.1.2198"
+          }
+        }
+      },
+      "OpenTelemetry.Instrumentation.AspNetCore/1.19.0": {
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.19.1"
+        },
+        "runtime": {
+          "lib/net10.0/OpenTelemetry.Instrumentation.AspNetCore.dll": {
+            "assemblyVersion": "1.19.0.1364",
+            "fileVersion": "1.19.0.1364"
+          }
+        }
+      },
+      "OpenTelemetry.Instrumentation.Http/1.19.0": {
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.19.1"
+        },
+        "runtime": {
+          "lib/net10.0/OpenTelemetry.Instrumentation.Http.dll": {
+            "assemblyVersion": "1.19.0.1372",
+            "fileVersion": "1.19.0.1372"
+          }
+        }
+      },
+      "RabbitMQ.Client/7.2.2": {
+        "runtime": {
+          "lib/net8.0/RabbitMQ.Client.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.2.2.0"
+          }
+        }
+      },
+      "Swashbuckle.AspNetCore/10.0.1": {
+        "dependencies": {
+          "Swashbuckle.AspNetCore.Swagger": "10.0.1",
+          "Swashbuckle.AspNetCore.SwaggerGen": "10.0.1",
+          "Swashbuckle.AspNetCore.SwaggerUI": "10.0.1"
+        }
+      },
+      "Swashbuckle.AspNetCore.Swagger/10.0.1": {
+        "dependencies": {
+          "Microsoft.OpenApi": "2.12.0"
+        },
+        "runtime": {
+          "lib/net10.0/Swashbuckle.AspNetCore.Swagger.dll": {
+            "assemblyVersion": "10.0.1.0",
+            "fileVersion": "10.0.1.1964"
+          }
+        }
+      },
+      "Swashbuckle.AspNetCore.SwaggerGen/10.0.1": {
+        "dependencies": {
+          "Swashbuckle.AspNetCore.Swagger": "10.0.1"
+        },
+        "runtime": {
+          "lib/net10.0/Swashbuckle.AspNetCore.SwaggerGen.dll": {
+            "assemblyVersion": "10.0.1.0",
+            "fileVersion": "10.0.1.1964"
+          }
+        }
+      },
+      "Swashbuckle.AspNetCore.SwaggerUI/10.0.1": {
+        "runtime": {
+          "lib/net10.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
+            "assemblyVersion": "10.0.1.0",
+            "fileVersion": "10.0.1.1964"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "NewsletterService/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.OpenApi/10.0.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7RnQ/UKn+kK3JDLmTpW+vVqNErWthGPAVAy1aIiBzv4ucQ6g9NFvOJUuT0PHcpvcJxGVxctMxj6t+NESWMrgHQ==",
+      "path": "microsoft.aspnetcore.openapi/10.0.12",
+      "hashPath": "microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512"
+    },
+    "Microsoft.OpenApi/2.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0xB/be+f6qYOhvQPUrVsLrau+fkowYv6gt9RIkajMhwT7sZnqtcA797yW3bS5kgSje+AQW4xZgyLnW641YFioQ==",
+      "path": "microsoft.openapi/2.12.0",
+      "hashPath": "microsoft.openapi.2.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry/1.19.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6ywhc3upf+dq8EsOohj7I7zS3l4yX9vfbtFkvyEC8xIUY4Z9iDIOVuke356eCAzIZaWtmwmmyl2UXYCp5n7I3Q==",
+      "path": "opentelemetry/1.19.1",
+      "hashPath": "opentelemetry.1.19.1.nupkg.sha512"
+    },
+    "OpenTelemetry.Api/1.19.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9JKIH+xrV0HNTFjQC8zrx9gZpDOMEljN5Htg/U0VE2IvO3N+7bKALCCsGy5tp09marX5dd8UkrgQFoLaulIBRw==",
+      "path": "opentelemetry.api/1.19.1",
+      "hashPath": "opentelemetry.api.1.19.1.nupkg.sha512"
+    },
+    "OpenTelemetry.Api.ProviderBuilderExtensions/1.19.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HtGe72B/IhzKqdU0a3fNE5osax/Cegwxd+p4u6lOFy20nsgmeaFuP2NRyFs1WvrOv/bpkII3IvvBkKoZXG8BLg==",
+      "path": "opentelemetry.api.providerbuilderextensions/1.19.1",
+      "hashPath": "opentelemetry.api.providerbuilderextensions.1.19.1.nupkg.sha512"
+    },
+    "OpenTelemetry.Exporter.OpenTelemetryProtocol/1.19.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vsYYOBf/KxNubnuoja8pjJ9LG0zCC9HAYPay+R6N5ZKZMbhNdKWbaq6JZqJqTvK+55rudiqErJySekf9ql8okA==",
+      "path": "opentelemetry.exporter.opentelemetryprotocol/1.19.1",
+      "hashPath": "opentelemetry.exporter.opentelemetryprotocol.1.19.1.nupkg.sha512"
+    },
+    "OpenTelemetry.Extensions.Hosting/1.19.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3qqZfVmW8mKA2/fRwI83o8z+yZd33KbEqRlXrlX0+3e/U7i+z0MQiCr0L3Axxa0jGdiylIrpWX4DIT9nAbJ00A==",
+      "path": "opentelemetry.extensions.hosting/1.19.1",
+      "hashPath": "opentelemetry.extensions.hosting.1.19.1.nupkg.sha512"
+    },
+    "OpenTelemetry.Instrumentation.AspNetCore/1.19.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-reypo7g0Nzyssg1EkbfWU6W58CVFgtgkSEGrFXtbpA+bNit7HUs7587DOkOdPCgqWr3IL4f6X9B2yhnU6POrFA==",
+      "path": "opentelemetry.instrumentation.aspnetcore/1.19.0",
+      "hashPath": "opentelemetry.instrumentation.aspnetcore.1.19.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Instrumentation.Http/1.19.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-+egJpWBRfYP3ldfexV2bmJyzOWkkOPVYikw/vUEtbUvf2exJfY3RGInXrYlubhBIH6rmNEn6sI/FmqenZJwkjw==",
+      "path": "opentelemetry.instrumentation.http/1.19.0",
+      "hashPath": "opentelemetry.instrumentation.http.1.19.0.nupkg.sha512"
+    },
+    "RabbitMQ.Client/7.2.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-k4b6RnTXpLbsF96V93ooNYxgPMnoA2tEm24B6AXNJr1mG8wwNYdA1XJtgU66L5xqeGyveS7SJriRzlX3cbqQNA==",
+      "path": "rabbitmq.client/7.2.2",
+      "hashPath": "rabbitmq.client.7.2.2.nupkg.sha512"
+    },
+    "Swashbuckle.AspNetCore/10.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-177+JNAV5TNvy8gLCdrcWBY9n2jdkxiHQDY4vhaExeqUpKrOqDatCcm/kW3kze60GqfnZ2NobD/IKiAPOL+CEw==",
+      "path": "swashbuckle.aspnetcore/10.0.1",
+      "hashPath": "swashbuckle.aspnetcore.10.0.1.nupkg.sha512"
+    },
+    "Swashbuckle.AspNetCore.Swagger/10.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HJYFSP18YF1Z6LCwunL+v8wuZUzzvcjarB8AJna/NVVIpq11FH9BW/D/6abwigu7SsKRbisStmk8xu2mTsxxHg==",
+      "path": "swashbuckle.aspnetcore.swagger/10.0.1",
+      "hashPath": "swashbuckle.aspnetcore.swagger.10.0.1.nupkg.sha512"
+    },
+    "Swashbuckle.AspNetCore.SwaggerGen/10.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vMMBDiTC53KclPs1aiedRZnXkoI2ZgF5/JFr3Dqr8KT7wvIbA/MwD+ormQ4qf25gN5xCrJbmz/9/Z3RrpSofMA==",
+      "path": "swashbuckle.aspnetcore.swaggergen/10.0.1",
+      "hashPath": "swashbuckle.aspnetcore.swaggergen.10.0.1.nupkg.sha512"
+    },
+    "Swashbuckle.AspNetCore.SwaggerUI/10.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-a2eLI/fCxJ3WH+H1hr7Q2T82ZBk20FfqYBEZ9hOr3f+426ZUfGU2LxYWzOJrf5/4y6EKShmWpjJG01h3Rc+l6Q==",
+      "path": "swashbuckle.aspnetcore.swaggerui/10.0.1",
+      "hashPath": "swashbuckle.aspnetcore.swaggerui.10.0.1.nupkg.sha512"
+    }
+  }
+}

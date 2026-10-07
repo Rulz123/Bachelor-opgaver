@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "dgSpecHash": "YUQ7FIodVIc=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Nichlas\\Documents\\GitHub\\Bachelor-opgaver\\HappyHeadlines\\src\\NewsletterService\\NewsletterService.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Nichlas\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.12\\microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\microsoft.extensions.apidescription.server\\10.0.0\\microsoft.extensions.apidescription.server.10.0.0.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\microsoft.openapi\\2.12.0\\microsoft.openapi.2.12.0.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\opentelemetry\\1.19.1\\opentelemetry.1.19.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\opentelemetry.api\\1.19.1\\opentelemetry.api.1.19.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\opentelemetry.api.providerbuilderextensions\\1.19.1\\opentelemetry.api.providerbuilderextensions.1.19.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\opentelemetry.exporter.opentelemetryprotocol\\1.19.1\\opentelemetry.exporter.opentelemetryprotocol.1.19.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\opentelemetry.extensions.hosting\\1.19.1\\opentelemetry.extensions.hosting.1.19.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\opentelemetry.instrumentation.aspnetcore\\1.19.0\\opentelemetry.instrumentation.aspnetcore.1.19.0.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\opentelemetry.instrumentation.http\\1.19.0\\opentelemetry.instrumentation.http.1.19.0.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\rabbitmq.client\\7.2.2\\rabbitmq.client.7.2.2.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\swashbuckle.aspnetcore\\10.0.1\\swashbuckle.aspnetcore.10.0.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\10.0.1\\swashbuckle.aspnetcore.swagger.10.0.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\10.0.1\\swashbuckle.aspnetcore.swaggergen.10.0.1.nupkg.sha512",
+    "C:\\Users\\Nichlas\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\10.0.1\\swashbuckle.aspnetcore.swaggerui.10.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
