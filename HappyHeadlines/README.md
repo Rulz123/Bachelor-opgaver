@@ -333,6 +333,57 @@ HAPPY_HEADLINES_ROOT="$PWD" dotnet test tests/ArticleService.Tests/ArticleServic
 	--artifacts-path /tmp/happy-headlines-test-artifacts
 ```
 
+## Week 43: CI/CD delivery to GHCR
+
+The GitHub Actions workflow `.github/workflows/happy-headlines-ci-cd.yml`
+runs on pushes and pull requests targeting `main`, `master`, and `Josephine`.
+It can also be started from the Actions tab with **Run workflow**.
+
+1. Restore `HappyHeadlines.sln`, build in Release, and run all existing tests
+	with `HAPPY_HEADLINES_ROOT` set to the absolute `HappyHeadlines` directory.
+	TRX results are uploaded even when tests fail.
+2. After tests pass, build the six application images using their existing
+	Dockerfiles with `HappyHeadlines` as the build context. Messaging and
+	Observability are libraries, not independently published services.
+3. Only after all six builds succeed, publish the exact built images to GHCR.
+	Pull requests build and test but never log in or publish. Only the publish
+	job receives `packages: write`; authentication uses the built-in
+	`GITHUB_TOKEN`, with no personal access token or repository secret required.
+	Manual runs publish only from the three allowed branches.
+
+Images use this format (all repository, service, and branch names lowercase):
+
+```text
+ghcr.io/rulz123/bachelor-opgaver/happy-headlines-<service>:<branch>-<run-number>-<run-attempt>-<full-commit-sha>
+```
+
+The six service suffixes are `articleservice`, `commentservice`,
+`profanityservice`, `draftservice`, `publisherservice`, and `newsletterservice`.
+The run number, attempt, and full SHA give each delivery a unique tag,
+including reruns. There is no mutable `latest` tag. OCI labels record source
+repository, commit, workflow URL, and version; each publish job's summary
+contains its exact pullable tag. Temporary image archives expire after one day.
+The Docker context excludes `.env` files, including nested variants.
+
+To demonstrate delivery, push a commit to `Josephine`, open **Actions > Happy
+Headlines CI/CD**, and inspect the test, six build, and six publish jobs.
+Open the repository's **Packages** links to inspect delivered versions.
+GitHub Actions must be enabled and repository policy must allow the workflow's
+`GITHUB_TOKEN` to write packages. Existing packages must grant this repository
+Actions write access. Packages are private by default; reading a private image
+outside Actions requires a separate login with `read:packages` permission.
+
+Copy an exact image reference from the workflow summary to pull or run it:
+
+```bash
+docker pull ghcr.io/rulz123/bachelor-opgaver/happy-headlines-articleservice:<exact-version>
+docker run --rm -p 8081:8080 --env-file .env ghcr.io/rulz123/bachelor-opgaver/happy-headlines-articleservice:<exact-version>
+```
+
+Provide the service's normal runtime environment and reachable dependencies
+when running it; the image does not embed `.env`. This assignment delivers
+versioned images, not production deployment.
+
 ## Complete verification
 
 Run the complete local stack and all tests from the repository root:

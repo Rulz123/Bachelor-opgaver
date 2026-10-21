@@ -2,3 +2,8 @@
 **/obj/
 .git/
 docs/architecture/.structurizr/
+**/.env
+**/.env.*
+**/*.env
+**/*.env.*
+**/TestResults/
