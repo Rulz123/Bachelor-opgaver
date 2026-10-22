@@ -8,6 +8,7 @@ Notes, design decisions and evidence from the MobilityTicketing labs. Each lectu
 - [Lecture 2 — SQL operations and constraints](#lecture-2--sql-operations-and-constraints)
 - [Lecture 3 — SQL programmability](#lecture-3--sql-programmability)
 - [Lecture 4 — Product-identity migration](#lecture-4--product-identity-migration)
+- [Lecture 5 — MongoDB journey search](#lecture-5--mongodb-journey-search)
 
 ## Lecture 1 — Relational modelling
 
@@ -522,3 +523,73 @@ The [Lecture 4 evidence index](lecture04/README.md) links the
 SQL scripts, execution commands and recorded successes and failures.
 All personal learning notes and rollout decisions remain in this file.
 
+## Lecture 5 — MongoDB journey search
+
+### Purpose
+
+Build a document model for direct journey searches while keeping
+PostgreSQL as the source of truth.
+
+### What I implemented
+
+- Search by city, origin, destination and UTC time interval.
+- Validation tests for incorrect date types and negative seat counts.
+- A demonstration and correction of the array-query matching bug.
+- Cancellation, inconsistent-copy repair, departure-time and price updates.
+- Document-size measurements.
+- An alternative model with one dated trip and stop pair per document.
+
+### What I learned
+
+Separate conditions on an array can match different elements.
+Using $elemMatch requires the conditions to match the same element.
+My original search instead uses $unwind before filtering departures.
+
+Duplicating trip information makes reads convenient, but updates must
+reach every relevant copy. Updating only one copy caused searches for
+different destinations to disagree.
+
+Repeating the cancellation matched two documents but modified zero
+after the first successful update. This demonstrated idempotence.
+
+### Document growth
+
+The embedded document measured:
+
+| Departures | BSON bytes |
+|---|---:|
+| 100 | 12,307 |
+| 1,000 | 123,007 |
+
+Ten times as many departures increased size by approximately 9.99 times.
+I would bound embedded documents by service date and, if needed, smaller
+time windows.
+
+### Model decision
+
+I would continue with journey_search_by_trip for the Redis lab.
+
+Both implementations passed the same nine search and input-validation
+checks. The alternative supports direct field filtering and updates,
+without needing $unwind or arrayFilters.
+
+Its trade-off is more documents and repeated journey fields.
+It still stores LAB05-T-OK twice because the trip serves two searchable
+stop pairs. Cancellation must therefore update both documents.
+
+The experiments demonstrate correctness for the supplied fixture.
+They do not establish which model performs best at production scale.
+
+### Evidence
+
+- [Validation](lecture05/validation-results.txt)
+- [Original search](lecture05/search-results.txt)
+- [Array-query bug](lecture05/search-bug-results.txt)
+- [Repeated cancellation](lecture05/update-results.txt)
+- [Inconsistency and repair](lecture05/consistency-results.txt)
+- [Departure movement](lecture05/departure-move-results.txt)
+- [Price update](lecture05/price-update-results.txt)
+- [Document growth](lecture05/growth-results.txt)
+- [Alternative model](lecture05/alternative-build-results.txt)
+- [Alternative search](lecture05/alternative-search-results.txt)
+- [Alternative cancellation](lecture05/alternative-cancel-results.txt)
