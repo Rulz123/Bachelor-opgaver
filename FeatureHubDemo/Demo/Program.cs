@@ -1,9 +1,13 @@
+using System.Globalization;
 using FeatureHubSDK;
 
 var danishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Copenhagen");
 
 if (args.Contains("--self-test"))
 {
+    if (CountryValue("DK") != "denmark" || CountryValue("dk") != "denmark"
+        || CountryValue("SE") != "sweden" || CountryValue(null) != null)
+        throw new InvalidOperationException("Country conversion failed.");
     if (new FeatureHubRepository().IsEnabled("TimelyGreetings"))
         throw new InvalidOperationException("Missing SDK flag must be disabled.");
     foreach (var (hour, minute, expected) in new[]
@@ -24,10 +28,13 @@ if (args.Contains("--self-test"))
         if (Greeting(true, instant) != "Good Morning, World")
             throw new InvalidOperationException("Danish time zone conversion failed.");
     }
-    Console.WriteLine("PASS: boundaries, disabled/missing state, missing SDK flag, Danish winter/summer time.");
+    Console.WriteLine("PASS: countries, boundaries, disabled/missing state, SDK fallback, Danish winter/summer time.");
     return;
 }
 
+var countryIndex = Array.IndexOf(args, "--country");
+var country = CountryValue(countryIndex < 0 ? null : args.ElementAtOrDefault(countryIndex + 1)
+    ?? throw new ArgumentException("--country requires a two-letter ISO country code."));
 IClientContext? context = null;
 var edgeUrl = Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL");
 var apiKey = Environment.GetEnvironmentVariable("FEATUREHUB_API_KEY");
@@ -36,9 +43,13 @@ if (!string.IsNullOrWhiteSpace(edgeUrl) && !string.IsNullOrWhiteSpace(apiKey))
     try
     {
         var config = new EdgeFeatureHubConfig(edgeUrl, apiKey);
-        var initialization = config.Init();
         context = config.NewContext();
-        await Task.WhenAll(initialization, context.Build()).WaitAsync(TimeSpan.FromSeconds(10));
+        if (country != null) context.Attr("country", country);
+        var initialization = context.Build();
+        await Task.WhenAll(initialization, context.EdgeService.Poll()).WaitAsync(TimeSpan.FromSeconds(10));
+        if (context.Repository.Readyness != Readyness.Ready)
+            throw new InvalidOperationException("FeatureHub did not provide initial state.");
+        Console.Error.WriteLine($"FeatureHub ready (country={country ?? "not supplied"}).");
     }
     catch (Exception)
     {
@@ -65,4 +76,12 @@ string Greeting(bool? enabled, DateTimeOffset instant)
     var hour = TimeZoneInfo.ConvertTime(instant, danishTimeZone).Hour;
     return hour is >= 5 and < 12 ? "Good Morning, World"
         : hour is >= 12 and < 18 ? "Good Day, World" : "Good Evening, World";
+}
+
+string? CountryValue(string? code)
+{
+    if (code is null) return null;
+    if (code.Length != 2 || !code.All(char.IsAsciiLetter))
+        throw new ArgumentException("Use a two-letter ISO country code, for example DK or SE.");
+    return new RegionInfo(code.ToUpperInvariant()).EnglishName.ToLowerInvariant().Replace(' ', '_');
 }

@@ -11,6 +11,7 @@ services:
     build:
       context: .
       dockerfile: Demo/Dockerfile
+    command: ["--country", "${GREETING_COUNTRY:-DK}"]
     environment:
       FEATUREHUB_EDGE_URL: ${FEATUREHUB_EDGE_URL:-http://featurehub:8085}
       FEATUREHUB_API_KEY: ${FEATUREHUB_API_KEY:-}

@@ -1,17 +1,22 @@
-# TimelyGreetings - FeatureHubDemo
+# Partial country based rollout - FeatureHubDemo
 
 Standalone DLS exercise, reconstructed from the supplied starter files because
 neither FeatureHubDemo nor its ZIP was found. No Happy Headlines code is used.
-The submission is the complete `Demo/Program.cs`.
+The submission for **Partial country based rollout** is the complete
+`Demo/Program.cs`. FeatureHub, not an application-side country condition, decides
+whether TimelyGreetings is enabled. The earlier global-toggle exercise and its
+verification evidence are preserved below as history.
 
 ## Start
 
 ```bash
-cd /home/josephine/Bachelor-opgaver-1/FeatureHubDemo
+cd /home/josephine/Bachelor-opgaver-w43/FeatureHubDemo
+ENV_FILE=/home/josephine/Bachelor-opgaver-1/FeatureHubDemo/.env
+compose=(docker compose -p featurehubdemo --env-file "$ENV_FILE")
 dotnet build Demo/Demo.csproj
-docker compose config --quiet
-docker compose up -d --build
-docker compose logs -f app
+"${compose[@]}" config --quiet
+"${compose[@]}" up -d --no-deps --build app
+"${compose[@]}" logs -f app
 ```
 
 FeatureHub: http://localhost:8088 (observed version: **1.10.1**).
@@ -19,10 +24,111 @@ Inside Docker the app connects to **http://featurehub:8085**, not port 8088.
 For `dotnet run`, set `FEATUREHUB_EDGE_URL=http://localhost:8088` in the process
 environment and supply the key privately. `dotnet run` does not load `.env`.
 
-Compose reads the ignored local `.env`; `.env.example` contains placeholders only.
+Josephine is checked out in `/home/josephine/Bachelor-opgaver-w43` at the exercise
+baseline `011a8ce19b8c37454e57b01c4761eaef9545ad3b`. The original repository
+directory remains on Mathias with its other local work untouched. Commands above
+reuse the existing Compose project **featurehubdemo** and its original ignored
+`.env`; they do not create a second FeatureHub server or database volume.
+Do not run an unqualified `docker compose up` in the other worktree.
+`.env.example` contains placeholders only.
 Do not print `docker compose config` without `--quiet`: it can expose the key.
 If 8088 becomes occupied, change `FEATUREHUB_HOST_PORT` in `.env` to an unused
 host port. Do not change the internal 8085 port or stop unrelated projects.
+
+## Country input and real FeatureHub targeting
+
+The app accepts a simulated two-letter ISO country code, for example
+`--country DK` or `--country SE`. This is exercise input, not IP geolocation or
+an authorization mechanism. Missing country means that no country attribute
+is sent to FeatureHub.
+
+SDK 3.0.0 does **not** serialize Denmark as `DK`:
+`Country(StrategyAttributeCountryName.Denmark)` serializes `country=denmark`.
+Its Country method delegates to the same attribute store exposed by `Attr`.
+The implementation converts ISO input using .NET RegionInfo's English name,
+normalizes it to lower-case/underscores, and calls `context.Attr("country", ...)`.
+Thus DK/dk sends `denmark` and SE sends `sweden`. This only translates user data;
+it never selects a greeting or enables the flag based on country locally.
+
+The context is populated **before** Build starts the SSE connection. Build/Poll
+initialization waits at most ten seconds; a safe readiness message confirms that
+the SDK received an initial state. No raw key-bearing SDK logging is enabled.
+
+The existing server-evaluated READ key is reused. Final Local configuration:
+
+- Application: `FeatureHubDemo`, portfolio: `Gruppe 1`.
+- Feature key: `TimelyGreetings`, type: BOOLEAN, default value: **false**.
+- Application strategy: `Denmark only`.
+- Rule: Country **equals Denmark**, represented by `fieldName=country`,
+  `conditional=EQUALS`, `type=STRING`, `values=["denmark"]`.
+- No percentage or user-key restrictions: all matching Danish users receive true.
+- Attach the application strategy to TimelyGreetings in **Local**, serving **true**.
+- All nonmatching or absent countries receive the default false.
+- The existing `production` environment is untouched.
+
+To inspect/recreate this in FeatureHub 1.10.1: open Application Strategies for
+FeatureHubDemo and create/reuse `Denmark only` with the Country/equals/Denmark
+condition. On Features, open TimelyGreetings's **Local** cell, keep default OFF,
+use Show available app strategies to attach that strategy, serve ON and Save.
+
+**Disable/re-enable the rule in Local by detaching/re-attaching its application
+strategy reference and saving.** Keep the reusable strategy definition and the
+default OFF. In this observed server version, setting `disabled=true` on a
+custom rule was persisted but Edge still returned true for DK; setting that
+property on the environment instance did not persist it. Those attempts were
+not counted as passing live tests. The verified method removes/restores the
+strategy's reference in `rolloutStrategyInstances`; it does not change the
+application code or restart the app.
+
+Compose starts the main app with `--country ${GREETING_COUNTRY:-DK}`.
+The country is stable for that app process. Changing the process's input requires
+recreation, but changing FeatureHub targeting does not. Independent test runs:
+
+```bash
+# Use the compose array and ENV_FILE defined in Start.
+"${compose[@]}" run --rm --no-deps app --country DK
+"${compose[@]}" run --rm --no-deps app --country SE
+"${compose[@]}" run --rm --no-deps --entrypoint dotnet app Demo.dll
+"${compose[@]}" run --rm --no-deps app --self-test
+```
+
+The entrypoint override in the third command removes Compose's default country
+arguments, testing genuinely missing country. For a host run, privately configure
+FEATUREHUB_API_KEY and use `FEATUREHUB_EDGE_URL=http://localhost:8088` with
+`dotnet run --project Demo/Demo.csproj -- --country DK`. Never print the key.
+
+## Verified country rollout
+
+All three app processes connected to the actual local FeatureHub server, logging
+readiness for `denmark`, `sweden` and `not supplied`. No flag values were simulated.
+The main DK app was rebuilt/recreated once **before** the live-test baseline.
+All log timestamps below are UTC; Copenhagen was at 09:22-09:25, so the correct
+enabled greeting was Good Morning, World.
+
+| Actual input/configuration | Observed new Docker log |
+| --- | --- |
+| DK, Denmark rule attached | 2026-10-30T08:22:16.621521287Z Good Morning, World |
+| SE, Denmark rule attached again | 2026-10-30T08:25:52.719247976Z Hello World |
+| No country, Denmark rule attached again | 2026-10-30T08:25:53.005562149Z Hello World |
+| DK, rule detached; API saved at 08:25:34.539Z, feature version 9 | 2026-10-30T08:25:36.639298070Z Hello World |
+| DK, rule reattached; API saved at 08:25:48.685Z, feature version 10 | 2026-10-30T08:25:51.639462843Z Good Morning, World |
+
+Every relevant management API update returned HTTP 200. Container inspection
+before, during and after rule changes, including a final asserted comparison,
+showed unchanged values:
+
+```text
+ID: f45f8b02167a752f506d1293caa06843bca8d833df0498416a4bc0278ec7e4aa
+StartedAt: 2026-10-30T08:22:16.251992938Z
+RestartCount: 0
+```
+
+Host and final Docker runtime self-tests passed for DK/dk/SE/missing country,
+all greeting time boundaries, missing SDK state and Danish winter/summer time.
+Build and Compose config validation passed. Final state: default OFF with the
+Denmark-only strategy **attached and serving ON**. Required country-rollout tests
+have all passed. Temporary SE/no-country test containers are removed after the
+checks; the main DK app and existing FeatureHub remain running.
 
 ## Complete local setup in FeatureHub 1.10.1
 
@@ -54,27 +160,12 @@ Enter passwords only directly in the browser, never in chat.
    This initial configuration change recreates the app. Subsequent feature
    changes must not recreate or restart it.
 
-## Verify the real integration after setup
+## Earlier global-toggle exercise
 
-```bash
-docker compose ps -q app
-docker compose logs -f --since 1s app
-```
-
-Record the container ID. In Features select Local, unlock the feature if needed,
-and save these values while watching fresh log lines:
-
-1. OFF: `Hello World`.
-2. ON: the Danish-time greeting below, normally within five seconds of delivery.
-3. OFF again: output changes back in the same running container.
-4. Run `docker compose ps -q app` again: the ID must be unchanged. Also compare
-   `docker inspect --format '{{.State.StartedAt}}' <container-id>` before and after
-   the switches to exclude a restart of the same container.
-5. Optionally retire the flag temporarily in this exercise's Local environment:
-   output must return to `Hello World`. Un-retire it and leave it OFF.
-
-These are real integration checks, not proven by a simulated flag or self-test.
-The authenticated OFF / ON / OFF test passed; its exact evidence is below.
+The authenticated global OFF / ON / OFF test below predates country targeting.
+It is retained as historical evidence, not the current configuration. With the
+current Denmark strategy attached, default OFF still serves ON to Denmark.
+Use the country-rollout procedure above for the current exercise.
 
 ## Behaviour and tests
 
@@ -99,7 +190,8 @@ dotnet run --project Demo/Demo.csproj -- --self-test
 docker compose run --rm --no-deps app --self-test
 ```
 
-The lightweight self-test checks 04:59/05:00, 11:59/12:00, 17:59/18:00, disabled
+The lightweight self-test also checks ISO country conversion and
+04:59/05:00, 11:59/12:00, 17:59/18:00, disabled
 and missing state, an actual empty SDK repository, and winter/summer conversion.
 It runs against the same greeting function and needs no clock changes or test
 framework. Passing in the final runtime image verifies its time zone support.
@@ -127,7 +219,7 @@ Verified locally before account setup:
   continued with Hello World after the ten-second initialization bound.
 - Editor diagnostics found no errors in Program.cs, Demo.csproj or Compose.
 
-## Verified authenticated OFF / ON / OFF
+## Historical authenticated OFF / ON / OFF
 
 Using the existing logged-in browser session and the documented FeatureHub
 v1.10.1 management API, the Local environment's actual flag was changed. Every
@@ -156,7 +248,8 @@ StartedAt: 2026-10-30T07:45:14.377356985Z
 RestartCount: 0
 ```
 
-The flag is left OFF. The FeatureHub database volume and other projects were
+At the end of that earlier test the flag was left OFF. For the current rule
+state see Verified country rollout above. The FeatureHub database volume and other projects were
 not stopped or modified. No Program.cs change was needed for the integration
 test. The optional real-server retired-flag check was not run; missing-state
 behaviour was previously covered by the SDK repository and fallback tests.
@@ -167,7 +260,7 @@ https://github.com/featurehub-io/featurehub-dotnet-sdk/tree/9dcbd1efbd5ce7b1b4f4
 
 ## Files and data
 
-- `Demo/Program.cs`: submitted implementation and optional self-test.
+- `Demo/Program.cs`: country input, SDK context, greeting loop and optional self-test.
 - `Demo/Demo.csproj`: .NET 10 console app, FeatureHub.SDK 3.0.0.
 - `Demo/Dockerfile`: official SDK/runtime multistage build, non-root runtime.
 - `docker-compose.yml`: isolated app/server, environment forwarding, local port.
@@ -178,4 +271,5 @@ https://github.com/featurehub-io/featurehub-dotnet-sdk/tree/9dcbd1efbd5ce7b1b4f4
 FeatureHub data is stored in the Compose volume `featurehub-h2-data` (currently
 `featurehubdemo_featurehub-h2-data`). Keep it. Do not run `docker compose down -v`
 or remove the volume. `docker compose stop` stops only this demo and retains data.
-No country rollout, commit, push or Moodle submission is included.
+Country rollout is now configured and verified. No commit, push or Moodle
+submission was performed for this exercise.
