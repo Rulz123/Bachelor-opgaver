@@ -1,0 +1,21 @@
+services:
+  featurehub:
+    image: featurehub/party-server:latest
+    restart: always
+    volumes:
+      - featurehub-h2-data:/db
+    ports:
+      - "127.0.0.1:${FEATUREHUB_HOST_PORT:-8088}:8085"
+
+  app:
+    build:
+      context: .
+      dockerfile: Demo/Dockerfile
+    environment:
+      FEATUREHUB_EDGE_URL: ${FEATUREHUB_EDGE_URL:-http://featurehub:8085}
+      FEATUREHUB_API_KEY: ${FEATUREHUB_API_KEY:-}
+    depends_on:
+      - featurehub
+
+volumes:
+  featurehub-h2-data:
