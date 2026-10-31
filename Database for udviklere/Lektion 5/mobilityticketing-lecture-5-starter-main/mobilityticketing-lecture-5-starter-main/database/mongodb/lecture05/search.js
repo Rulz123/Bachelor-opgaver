@@ -72,3 +72,5 @@ const end = ISODate("2026-10-02T07:00:00Z");
 printjson(
   search("CPH", "STOP-NORREPORT", "STOP-AIRPORT", start, end)
 );
+
+//
