@@ -1,0 +1,24 @@
+﻿BEGIN
+OLD WRITER AFTER ID BECOMES REQUIRED
+docker : psql:/docker-entrypoint-initdb.d/experiments/lecture04/old_writer_rejected.sql:16: ERROR:  null value in column "product_id" of relation "tickets" violates not-null constraint
+At line:1 char:1
++ docker compose exec -T postgres psql -U mobility -d mobility -P pager ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (psql:/docker-en...null constraint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+DETAIL:  Failing row contains (LAB04-OLD-BLOCKED, USER-1, TRIP-M2-20260429-0800, LAB04-CODE-OLD-BLOCKED, Active, SINGLE, 2026-04-29 07:45:00+00, 2026-04-29 10:00:00+00, 36.00, DKK, nul
+l).
+Actual SQLSTATE: 23502 -- expected 23502
+ROLLBACK
+OLD READER STILL WORKS
+       id       | product_code | price | currency 
+----------------+--------------+-------+----------
+ LAB04-NEW-1    | DAY          |    65 | DKK
+ LAB04-OLD-1    | SINGLE       | 36.00 | DKK
+ LAB04-OLD-LATE | SINGLE       | 36.00 | DKK
+ TICKET-1       | SINGLE       | 36.00 | DKK
+ TICKET-2       | SINGLE       | 36.00 | DKK
+ TICKET-3       | DAY          | 65.00 | DKK
+(6 rows)
+

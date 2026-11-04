@@ -1,0 +1,13 @@
+﻿docker : psql:/docker-entrypoint-initdb.d/experiments/lecture04/new_writer.sql:21: ERROR:  23502: null value in column "product_code" of relation "tickets" violates not-null constraint
+At line:1 char:1
++ docker compose exec -T postgres psql -U mobility -d mobility -P pager ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (psql:/docker-en...null constraint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+DETAIL:  Failing row contains (LAB04-UNKNOWN, USER-1, TRIP-M2-20260429-1200, LAB04-CODE-UNKNOWN, Active, null, 2026-04-29 00:00:00+00, 2026-04-30 00:00:00+00, 65, DKK, 00000000-0000-00
+00-0000-000000000000).
+SCHEMA NAME:  public
+TABLE NAME:  tickets
+COLUMN NAME:  product_code
+LOCATION:  ExecConstraints, execMain.c:2022

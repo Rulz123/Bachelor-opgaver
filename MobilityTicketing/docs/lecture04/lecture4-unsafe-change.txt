@@ -1,0 +1,32 @@
+﻿BEGIN
+ALTER TABLE
+ALTER TABLE
+NEW COLUMN DOES NOT KNOW THE ORIGINAL PRODUCT
+    id    | product_id | price | currency 
+----------+------------+-------+----------
+ TICKET-1 |            | 36.00 | DKK
+ TICKET-2 |            | 36.00 | DKK
+ TICKET-3 |            | 65.00 | DKK
+(3 rows)
+
+OLD READER NOW FAILS
+Old-reader SQLSTATE: 42703 -- expected 42703
+docker : psql:/docker-entrypoint-initdb.d/experiments/lecture04/unsafe_change.sql:17: ERROR:  column "product_code" does not exist
+At line:1 char:1
++ docker compose exec -T postgres psql -U mobility -d mobility -P pager ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (psql:/docker-en... does not exist:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+LINE 1: select id, product_code, price, currency
+                   ^
+HINT:  Perhaps you meant to reference the column "tickets.product_id".
+ROLLBACK
+ORIGINAL DATA RESTORED
+    id    | product_code | price | currency 
+----------+--------------+-------+----------
+ TICKET-1 | SINGLE       | 36.00 | DKK
+ TICKET-2 | SINGLE       | 36.00 | DKK
+ TICKET-3 | DAY          | 65.00 | DKK
+(3 rows)
+

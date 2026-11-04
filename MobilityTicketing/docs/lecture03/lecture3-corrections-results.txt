@@ -1,0 +1,194 @@
+﻿\set ON_ERROR_STOP on
+
+\echo BEFORE CORRECTIONS
+BEFORE CORRECTIONS
+\ir compare_revenue.sql
+set timezone = 'UTC';
+SET
+
+select 'direct query' as approach,
+       coalesce(sum(p.amount), 0) as captured_amount,
+       count(*) as captured_payments
+from payments p
+join tickets t on t.id = p.ticket_id
+join trips tr on tr.id = t.trip_id
+join routes r on r.id = tr.route_id
+where r.operator_id = 'OP-METRO'
+  and p.created_utc::date = date '2026-04-29'
+  and p.status = 'Captured'
+
+union all
+
+select 'function', captured_amount, captured_payments
+from captured_revenue_for_day('OP-METRO', date '2026-04-29')
+
+union all
+
+select 'materialized view', captured_amount, captured_payments
+from daily_captured_revenue
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29'
+
+union all
+
+select 'trigger summary', captured_amount, captured_payments
+from daily_revenue_by_operator
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29';
+     approach      | captured_amount | captured_payments 
+-------------------+-----------------+-------------------
+ direct query      |           72.00 |                 2
+ function          |           72.00 |                 2
+ materialized view |           36.00 |                 1
+ trigger summary   |           72.00 |                 2
+(4 rows)
+
+
+-- Previously failed payment is now captured.
+update payments
+set status = 'Captured'
+where id = 'PAY-CASE-FAILED';
+UPDATE 1
+
+\echo AFTER FAILED TO CAPTURED
+AFTER FAILED TO CAPTURED
+\ir compare_revenue.sql
+set timezone = 'UTC';
+SET
+
+select 'direct query' as approach,
+       coalesce(sum(p.amount), 0) as captured_amount,
+       count(*) as captured_payments
+from payments p
+join tickets t on t.id = p.ticket_id
+join trips tr on tr.id = t.trip_id
+join routes r on r.id = tr.route_id
+where r.operator_id = 'OP-METRO'
+  and p.created_utc::date = date '2026-04-29'
+  and p.status = 'Captured'
+
+union all
+
+select 'function', captured_amount, captured_payments
+from captured_revenue_for_day('OP-METRO', date '2026-04-29')
+
+union all
+
+select 'materialized view', captured_amount, captured_payments
+from daily_captured_revenue
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29'
+
+union all
+
+select 'trigger summary', captured_amount, captured_payments
+from daily_revenue_by_operator
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29';
+     approach      | captured_amount | captured_payments 
+-------------------+-----------------+-------------------
+ direct query      |          122.00 |                 3
+ function          |          122.00 |                 3
+ materialized view |           36.00 |                 1
+ trigger summary   |           72.00 |                 2
+(4 rows)
+
+
+-- Previously captured payment is now refunded.
+update payments
+set status = 'Refunded'
+where id = 'PAY-CASE-CAPTURED';
+UPDATE 1
+
+\echo AFTER CAPTURED TO REFUNDED
+AFTER CAPTURED TO REFUNDED
+\ir compare_revenue.sql
+set timezone = 'UTC';
+SET
+
+select 'direct query' as approach,
+       coalesce(sum(p.amount), 0) as captured_amount,
+       count(*) as captured_payments
+from payments p
+join tickets t on t.id = p.ticket_id
+join trips tr on tr.id = t.trip_id
+join routes r on r.id = tr.route_id
+where r.operator_id = 'OP-METRO'
+  and p.created_utc::date = date '2026-04-29'
+  and p.status = 'Captured'
+
+union all
+
+select 'function', captured_amount, captured_payments
+from captured_revenue_for_day('OP-METRO', date '2026-04-29')
+
+union all
+
+select 'materialized view', captured_amount, captured_payments
+from daily_captured_revenue
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29'
+
+union all
+
+select 'trigger summary', captured_amount, captured_payments
+from daily_revenue_by_operator
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29';
+     approach      | captured_amount | captured_payments 
+-------------------+-----------------+-------------------
+ direct query      |           86.00 |                 2
+ function          |           86.00 |                 2
+ materialized view |           36.00 |                 1
+ trigger summary   |           72.00 |                 2
+(4 rows)
+
+
+-- Delete only the payment created for this experiment.
+delete from payments
+where id = 'PAY-CASE-FAILED';
+DELETE 1
+
+\echo AFTER TEST PAYMENT DELETION
+AFTER TEST PAYMENT DELETION
+\ir compare_revenue.sql
+set timezone = 'UTC';
+SET
+
+select 'direct query' as approach,
+       coalesce(sum(p.amount), 0) as captured_amount,
+       count(*) as captured_payments
+from payments p
+join tickets t on t.id = p.ticket_id
+join trips tr on tr.id = t.trip_id
+join routes r on r.id = tr.route_id
+where r.operator_id = 'OP-METRO'
+  and p.created_utc::date = date '2026-04-29'
+  and p.status = 'Captured'
+
+union all
+
+select 'function', captured_amount, captured_payments
+from captured_revenue_for_day('OP-METRO', date '2026-04-29')
+
+union all
+
+select 'materialized view', captured_amount, captured_payments
+from daily_captured_revenue
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29'
+
+union all
+
+select 'trigger summary', captured_amount, captured_payments
+from daily_revenue_by_operator
+where operator_id = 'OP-METRO'
+  and revenue_date = date '2026-04-29';
+     approach      | captured_amount | captured_payments 
+-------------------+-----------------+-------------------
+ direct query      |           36.00 |                 1
+ function          |           36.00 |                 1
+ materialized view |           36.00 |                 1
+ trigger summary   |           72.00 |                 2
+(4 rows)
+

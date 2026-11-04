@@ -1,0 +1,8 @@
+﻿BEGIN
+UPDATE 1
+     id      | stored_code | code_from_id | references_agree 
+-------------+-------------+--------------+------------------
+ LAB04-NEW-1 | SINGLE      | DAY          | f
+(1 row)
+
+ROLLBACK

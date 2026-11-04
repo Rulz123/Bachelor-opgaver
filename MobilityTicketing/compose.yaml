@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: mobility
+      POSTGRES_USER: mobility
+      POSTGRES_PASSWORD: mobility
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/postgres:/docker-entrypoint-initdb.d:ro
+
+  mongo:
+    image: mongo:8.0
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mobility-mongo:/data/db
+      - ./database/mongodb:/scripts:ro
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "quit(db.runCommand({ping:1}).ok ? 0 : 1)"
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+volumes:
+  mobility-mongo:

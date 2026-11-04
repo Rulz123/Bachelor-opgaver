@@ -1,0 +1,18 @@
+﻿INSERT FROM OLD APPLICATION
+INSERT 0 1
+BEFORE BACKFILL
+       id       | product_code | product_id 
+----------------+--------------+------------
+ LAB04-OLD-LATE | SINGLE       | 
+(1 row)
+
+CATCH UP THE LATE TICKET
+UPDATE 1
+AFTER BACKFILL
+       id       | product_code |              product_id              
+----------------+--------------+--------------------------------------
+ LAB04-OLD-LATE | SINGLE       | 8800620a-a214-46d9-950b-c7d08c5bdf6f
+(1 row)
+
+CONFIRM NOTHING ELSE REMAINS
+UPDATE 0

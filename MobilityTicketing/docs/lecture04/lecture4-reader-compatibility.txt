@@ -1,0 +1,17 @@
+﻿INSERT 0 1
+     id      | product_code | price | currency 
+-------------+--------------+-------+----------
+ LAB04-OLD-1 | SINGLE       | 36.00 | DKK
+ TICKET-1    | SINGLE       | 36.00 | DKK
+ TICKET-2    | SINGLE       | 36.00 | DKK
+ TICKET-3    | DAY          | 65.00 | DKK
+(4 rows)
+
+     id      | product_code | stored_product_id |         resolved_product_id          | price | currency 
+-------------+--------------+-------------------+--------------------------------------+-------+----------
+ LAB04-OLD-1 | SINGLE       |                   | 8800620a-a214-46d9-950b-c7d08c5bdf6f | 36.00 | DKK
+ TICKET-1    | SINGLE       |                   | 8800620a-a214-46d9-950b-c7d08c5bdf6f | 36.00 | DKK
+ TICKET-2    | SINGLE       |                   | 8800620a-a214-46d9-950b-c7d08c5bdf6f | 36.00 | DKK
+ TICKET-3    | DAY          |                   | 0afd95e7-1dde-449c-9bd5-e7e2e4fa978d | 65.00 | DKK
+(4 rows)
+
