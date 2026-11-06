@@ -5,8 +5,7 @@ namespace ArticleService.Data;
 
 public class ArticleDbContext : DbContext
 {
-    public ArticleDbContext(
-        DbContextOptions<ArticleDbContext> options) : base(options)
+    public ArticleDbContext(DbContextOptions<ArticleDbContext> options) : base(options)
     {
     }
 
