@@ -3,6 +3,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Sqlite;
 using RabbitMQ.Client;
 using SubscriberService.Data;
 
@@ -70,11 +71,10 @@ var dataDirectory = Path.Combine(
 
 
 builder.Services.AddSingleton<IConnection>(rabbitMqConnection);
-builder.Services.AddSingleton<SubscriberDbContext>();
-var databasePath = Path.Combine(dataDirectory, "drafts.db");
+var databasePath = Path.Combine(dataDirectory, "subscriber.db");
 
 builder.Services.AddDbContext<SubscriberDbContext>(options =>
-    options.UseSqlServer($"Data Source={databasePath}"));
+    options.UseSqlite($"Data Source={databasePath}"));
 
 await using (var channel =
     await rabbitMqConnection.CreateChannelAsync())

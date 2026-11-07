@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using SubscriberService.Data;
 
@@ -105,5 +106,14 @@ public class SubscriberController : ControllerBase
             email = subscriber.Email,
             unsubscribed = true
         });
+    }
+
+    [HttpGet("newsletterSubscriberGetter")]
+    public async Task<IActionResult> NewsletterSubscriberGetter(Subscriber subscriber,
+        CancellationToken cancellationToken)
+    {
+        var requestedSubscriber = await _dbContext.Subscribers.FirstOrDefaultAsync(s => s.Email.Equals(subscriber.Email) 
+        && s.Id.Equals(subscriber.Id), cancellationToken);
+        return requestedSubscriber != null ? Ok(requestedSubscriber) : NotFound();       
     }
 }
