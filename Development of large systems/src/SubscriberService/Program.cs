@@ -1,9 +1,10 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Sqlite;
 using RabbitMQ.Client;
 using SubscriberService.Data;
 
@@ -64,18 +65,14 @@ var rabbitMqFactory = new ConnectionFactory
 
 await using var rabbitMqConnection =
     await rabbitMqFactory.CreateConnectionAsync();
-
-var dataDirectory = Path.Combine(
-    builder.Environment.ContentRootPath,
-    "subscriber-data");
-
-
 builder.Services.AddSingleton<IConnection>(rabbitMqConnection);
-var databasePath = Path.Combine(dataDirectory, "subscriber.db");
-
+builder.Services.AddSingleton<JsonSerializerOptions>(
+    new JsonSerializerOptions(JsonSerializerDefaults.Web)
+);
 builder.Services.AddDbContext<SubscriberDbContext>(options =>
-    options.UseSqlite($"Data Source={databasePath}"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddSwaggerGen();
 await using (var channel =
     await rabbitMqConnection.CreateChannelAsync())
 {

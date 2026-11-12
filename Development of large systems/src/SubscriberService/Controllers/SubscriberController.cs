@@ -36,56 +36,67 @@ public class SubscriberController : ControllerBase
             return BadRequest("Email is required.");
         }
 
-        _dbContext.Subscribers.Add(new Subscriber
+        var subscriberExists = await _dbContext.Subscribers
+            .AnyAsync(s => s.Email == subscriber.Email, cancellationToken);
+
+        if (subscriberExists)
         {
-            Id = Guid.NewGuid(),
-            Email = subscriber.Email,
-            Name = subscriber.Name
-        });
-        
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        var body = JsonSerializer.SerializeToUtf8Bytes(
-           subscriber, _jsonOptions);
-
-        var channelOptions = new CreateChannelOptions(
-         publisherConfirmationsEnabled: true,
-         publisherConfirmationTrackingEnabled: true);
-
-        await using var channel = await _connection.CreateChannelAsync(channelOptions);
-        var properties = new BasicProperties
-        {
-            ContentType = "application/json",
-            Persistent = true,
-            MessageId = subscriber.Id.ToString(),
-            Headers = new Dictionary<string, object?>()
-        };
-
-        var currentActivity = Activity.Current;
-
-        if (currentActivity?.Id is string traceParent)
-        {
-            properties.Headers["traceparent"] =
-                Encoding.UTF8.GetBytes(traceParent);
+            return Conflict("Subscriber with this email already exists.");
         }
-
-        if (currentActivity?.TraceStateString is string traceState)
+        else
         {
-            properties.Headers["tracestate"] =
-                Encoding.UTF8.GetBytes(traceState);
+            _dbContext.Subscribers.Add(new Subscriber
+            {
+                Id = Guid.NewGuid(),
+                Email = subscriber.Email,
+                Name = subscriber.Name
+            });
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+
+
+            var body = JsonSerializer.SerializeToUtf8Bytes(
+               subscriber, _jsonOptions);
+
+            var channelOptions = new CreateChannelOptions(
+             publisherConfirmationsEnabled: true,
+             publisherConfirmationTrackingEnabled: true);
+
+            await using var channel = await _connection.CreateChannelAsync(channelOptions);
+            var properties = new BasicProperties
+            {
+                ContentType = "application/json",
+                Persistent = true,
+                MessageId = subscriber.Id.ToString(),
+                Headers = new Dictionary<string, object?>()
+            };
+
+            var currentActivity = Activity.Current;
+
+            if (currentActivity?.Id is string traceParent)
+            {
+                properties.Headers["traceparent"] =
+                    Encoding.UTF8.GetBytes(traceParent);
+            }
+
+            if (currentActivity?.TraceStateString is string traceState)
+            {
+                properties.Headers["tracestate"] =
+                    Encoding.UTF8.GetBytes(traceState);
+            }
+
+            await channel.BasicPublishAsync(
+                exchange: "subscriber.published",
+                routingKey: string.Empty,
+                mandatory: true,
+                basicProperties: properties,
+                body: body);
+            return Ok(new
+            {
+                email = subscriber.Email,
+                subscribed = true
+            });
         }
-
-        await channel.BasicPublishAsync(
-            exchange: "subscriber.published",
-            routingKey: string.Empty,
-            mandatory: true,
-            basicProperties: properties,
-            body: body);
-        return Ok(new
-        {
-            email = subscriber.Email,
-            subscribed = true
-        });
     }
 
     [HttpDelete]
@@ -112,8 +123,8 @@ public class SubscriberController : ControllerBase
     public async Task<IActionResult> NewsletterSubscriberGetter(Subscriber subscriber,
         CancellationToken cancellationToken)
     {
-        var requestedSubscriber = await _dbContext.Subscribers.FirstOrDefaultAsync(s => s.Email.Equals(subscriber.Email) 
+        var requestedSubscriber = await _dbContext.Subscribers.FirstOrDefaultAsync(s => s.Email.Equals(subscriber.Email)
         && s.Id.Equals(subscriber.Id), cancellationToken);
-        return requestedSubscriber != null ? Ok(requestedSubscriber) : NotFound();       
+        return requestedSubscriber != null ? Ok(requestedSubscriber) : NotFound();
     }
 }
