@@ -1,0 +1,12 @@
+
+\if :can_book
+UPDATE lab09.trips
+SET reserved_seats = reserved_seats + 1
+WHERE id = :'trip_id';
+
+INSERT INTO lab09.bookings (request_id, passenger_id, trip_id)
+VALUES (:'request_id', :'passenger_id', :'trip_id')
+RETURNING id;
+\else
+\echo The read found no available seat. No booking was written.
+\endif
