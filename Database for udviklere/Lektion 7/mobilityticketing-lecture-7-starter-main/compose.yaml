@@ -6,6 +6,8 @@ services:
       POSTGRES_DB: mobility_l07
       POSTGRES_USER: ${POSTGRES_USER:-mobility}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mobility}
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d mobility_l07"]
       interval: 2s

@@ -16,88 +16,273 @@ public sealed class StudentApplication(
     public ApplicationHooks Hooks { get; } = hooks ?? new ApplicationHooks();
     public RunMeasurement Measurement { get; } = measurement ?? new RunMeasurement();
 
-    // Connect your command and query classes here.
-    public Task<List<RouteOverviewDto>> ReadOverviewAsync(TimeWindow window, CancellationToken ct = default)
+    private static bool IsTransientConcurrencyException(Exception ex)
     {
-        using var db = CreateContext();
-
-        var query = db.Routes.AsQueryable().Select(r => new RouteOverviewDto(
-            r.Id,
-            r.Name,
-            r.Trips.Count(t =>
-                t.DepartureUtc >= window.FromUtc &&
-                t.DepartureUtc <= window.ToUtc),
-            window.FromUtc
-        )).ToListAsync(ct);
-
-        return query;
-    }
-
-    public async Task<CancelResult> CancelTripAsync(string tripId, CancellationToken ct = default)
-    {
-        using var db = CreateContext();
-
-
-        var trip = await db.Trips
-            .Where(t => t.Id == tripId)
-            .Select(t => new { t.Status })
-            .FirstOrDefaultAsync(ct);
-
-        if (trip == null)
-            return await Task.FromResult(CancelResult.NotFound);
-
-        if (trip.Status == "Cancelled")
-            return await Task.FromResult(CancelResult.AlreadyCancelled);
-
-        await db.Trips
-            .Where(t => t.Id == tripId)
-            .ExecuteUpdateAsync(
-                setters => setters.SetProperty(
-                    t => t.Status,
-                    "Cancelled"),
-                ct);
-
-        return await Task.FromResult(CancelResult.Cancelled);
-    }
-
-    //LectureDbContext.DeleteAsync<CancelResult>(Connection, tripId, ct);
-    public async Task<RenameResult> RenameRouteAsync(string routeId, string name, CancellationToken ct = default)
-    {
-        using var db = CreateContext();
-
-        var route = db.Routes.Find(routeId);
-
-        if (route == null)
-            return await Task.FromResult(RenameResult.NotFound);
-        route.Name = name;
-        db.Routes.Update(route);
-        return await Task.FromResult(RenameResult.Renamed);
-    }
-
-    public async Task<BookingResult> BookTripAsync(string tripId, string requestId, CancellationToken ct = default)
-    {
-        using var db = CreateContext();
-
-        BookingResult bookingResult;
-
-        var trip = db.Trips.Find(tripId);
-        var booking = new Booking();
-
-        if (trip == null)
+        for (var current = ex; current != null; current = current.InnerException)
         {
-            bookingResult = new BookingResult(BookingStatus.NotFound);
-            return await Task.FromResult(bookingResult);
+            var sqlState = current.GetType()
+                .GetProperty("SqlState")?
+                .GetValue(current) as string;
+
+            if (sqlState is "40001" or "40P01")
+                return true;
         }
 
-        var receipt = new BookingReceipt(requestId, tripId, DateTime.UtcNow);
-        bookingResult = new BookingResult(BookingStatus.Booked, receipt);
-        booking.RequestId = requestId;
-        booking.TripId = tripId;
-        booking.BookedAtUtc = receipt.BookedAtUtc;
-        db.Bookings.Add(booking);
-        return await Task.FromResult(bookingResult);
+        return false;
+    }
+    // Connect your command and query classes here.
+    public async Task<List<RouteOverviewDto>> ReadOverviewAsync(
+    TimeWindow window,
+    CancellationToken ct = default)
+    {
+        if (window.FromUtc > window.ToUtc)
+            throw new ArgumentException("The start of the time window must not be after its end.");
+
+        using var db = CreateContext();
+
+        return await db.Routes
+            .OrderBy(r => r.Id)
+            .Select(r => new RouteOverviewDto(
+                r.Id,
+                r.Name,
+                r.Trips.Count(t =>
+                    t.Status != "Cancelled" &&
+                    t.DepartureUtc >= window.FromUtc &&
+                    t.DepartureUtc < window.ToUtc),
+                r.Trips
+                    .Where(t =>
+                        t.Status != "Cancelled" &&
+                        t.DepartureUtc >= window.FromUtc &&
+                        t.DepartureUtc < window.ToUtc)
+                    .OrderBy(t => t.DepartureUtc)
+                    .Select(t => (DateTime?)t.DepartureUtc)
+                    .FirstOrDefault()
+            ))
+            .ToListAsync(ct);
     }
 
+    public async Task<CancelResult> CancelTripAsync(
+    string tripId,
+    CancellationToken ct = default)
+    {
+
+        if (string.IsNullOrWhiteSpace(tripId))
+            throw new ArgumentException("Trip ID cannot be empty.", nameof(tripId));
+
+        const int maxAttempts = 5;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            await using var db = CreateContext();
+
+            await using var transaction = await db.Database
+                .BeginTransactionAsync(
+                    System.Data.IsolationLevel.ReadCommitted, ct);
+
+            try
+            {
+                var locked = await db.Trips
+                    .Where(t => t.Id == tripId)
+                    .ExecuteUpdateAsync(
+                        setters => setters.SetProperty(
+                            t => t.Status,
+                            t => t.Status),
+                        ct);
+
+                if (locked == 0)
+                    return CancelResult.NotFound;
+
+                var trip = await db.Trips
+                    .FirstAsync(t => t.Id == tripId, ct);
+
+                if (trip.Status == "Cancelled")
+                    return CancelResult.AlreadyCancelled;
+
+                trip.Status = "Cancelled";
+
+                await db.SaveChangesAsync(ct);
+                await transaction.CommitAsync(ct);
+
+                return CancelResult.Cancelled;
+            }
+            catch (Exception ex) when (
+                IsTransientConcurrencyException(ex) &&
+                attempt < maxAttempts - 1)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+
+                await Task.Delay(
+                    TimeSpan.FromMilliseconds(10 * (attempt + 1)),
+                    ct);
+            }
+        }
+
+        throw new InvalidOperationException(
+            "Cancellation could not be completed after multiple attempts.");
+    }
+
+    public async Task<RenameResult> RenameRouteAsync(
+    string routeId,
+    string name,
+    CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(routeId))
+            throw new ArgumentException("Route ID cannot be empty.", nameof(routeId));
+
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Route name cannot be empty.", nameof(name));
+
+        using var db = CreateContext();
+
+        var route = await db.Routes.FindAsync([routeId], ct);
+
+        if (route == null)
+            return RenameResult.NotFound;
+
+        route.Name = name.Trim();
+
+        await db.SaveChangesAsync(ct);
+
+        return RenameResult.Renamed;
+    }
+
+    public async Task<BookingResult> BookTripAsync(
+    string tripId,
+    string requestId,
+    CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(requestId))
+            throw new ArgumentException(
+                "Request ID cannot be empty.",
+                nameof(requestId));
+
+        if (string.IsNullOrWhiteSpace(tripId))
+            return new BookingResult(BookingStatus.NotFound);
+
+        const int maxAttempts = 5;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            await using var db = CreateContext();
+
+            await using var transaction = await db.Database
+                .BeginTransactionAsync(
+                    System.Data.IsolationLevel.ReadCommitted, ct);
+
+            try
+            {
+                // Acquire a write lock on the trip row.
+                var locked = await db.Trips
+                    .Where(t => t.Id == tripId)
+                    .ExecuteUpdateAsync(
+                        setters => setters.SetProperty(
+                            t => t.Status,
+                            t => t.Status),
+                        ct);
+
+                if (locked == 0)
+                    return new BookingResult(BookingStatus.NotFound);
+
+                // Reload the trip after acquiring the lock.
+                var trip = await db.Trips
+                    .FirstAsync(t => t.Id == tripId, ct);
+
+                // Idempotency check.
+                var existing = await db.Bookings
+                    .FindAsync(new object[] { requestId }, ct);
+
+                if (existing != null)
+                {
+                    await transaction.CommitAsync(ct);
+
+                    if (existing.TripId != tripId)
+                        return new BookingResult(
+                            BookingStatus.RequestConflict);
+
+                    return new BookingResult(
+                        BookingStatus.AlreadyBooked,
+                        new BookingReceipt(
+                            existing.RequestId,
+                            existing.TripId,
+                            existing.BookedAtUtc));
+                }
+
+                if (trip.Status == "Cancelled")
+                    return new BookingResult(BookingStatus.Cancelled);
+
+                var bookingTime = Clock.GetUtcNow().UtcDateTime;
+
+                if (bookingTime > trip.DepartureUtc)
+                    return new BookingResult(BookingStatus.NotFound);
+
+                var booking = new Booking
+                {
+                    RequestId = requestId,
+                    TripId = tripId,
+                    BookedAtUtc = bookingTime
+                };
+
+                db.Bookings.Add(booking);
+
+                await db.SaveChangesAsync(ct);
+
+                // Use the persisted timestamp in the receipt.
+                await db.Entry(booking).ReloadAsync(ct);
+
+                var receipt = new BookingReceipt(
+                    booking.RequestId,
+                    booking.TripId,
+                    booking.BookedAtUtc);
+
+                await transaction.CommitAsync(ct);
+
+                return new BookingResult(
+                    BookingStatus.Booked,
+                    receipt);
+            }
+            catch (DbUpdateException)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+
+                // Check whether another request inserted the same ID.
+                await using var retryDb = CreateContext();
+
+                var existing = await retryDb.Bookings
+                    .FindAsync(new object[] { requestId }, ct);
+
+                if (existing != null)
+                {
+                    if (existing.TripId != tripId)
+                        return new BookingResult(
+                            BookingStatus.RequestConflict);
+
+                    return new BookingResult(
+                        BookingStatus.AlreadyBooked,
+                        new BookingReceipt(
+                            existing.RequestId,
+                            existing.TripId,
+                            existing.BookedAtUtc));
+                }
+
+                throw;
+            }
+            catch (Exception ex) when (
+            IsTransientConcurrencyException(ex) &&
+            attempt < maxAttempts - 1)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+
+                // Retry using a completely new DbContext.
+                await Task.Delay(
+                    TimeSpan.FromMilliseconds(10 * (attempt + 1)),
+                    ct);
+            }
+        }
+
+        throw new InvalidOperationException(
+            "Booking could not be completed after multiple attempts.");
+    }
+    
     public async Task<PublishResult> PublishSnapshotAsync(string snapshotId, TimeWindow window,
         CancellationToken ct = default)
     {
@@ -115,7 +300,7 @@ public sealed class StudentApplication(
 
         await db.SaveChangesAsync(ct);
 
-        return PublishResult.Published;
+        return await Task.FromResult(PublishResult.Published);
     }
 
     public async Task<PublishedSnapshot> ReadSnapshotAsync(string snapshotId, CancellationToken ct = default)
@@ -124,6 +309,7 @@ public sealed class StudentApplication(
 
         return await db.Set<PublishedSnapshot>()
             .FirstAsync(s => s.Id == snapshotId, ct);
+
     }
 
     public LectureDbContext CreateContext()

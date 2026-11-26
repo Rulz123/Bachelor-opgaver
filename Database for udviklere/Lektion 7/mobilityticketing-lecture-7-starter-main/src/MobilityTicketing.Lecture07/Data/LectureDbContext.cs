@@ -10,6 +10,8 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
     public DbSet<Route> Routes => Set<Route>();
     public DbSet<Trip> Trips => Set<Trip>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<DispatchPlan> DispatchPlans => Set<DispatchPlan>();
+   // public DbSet<PublishedSnapshot> PublishedSnapshots => Set<PublishedSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -37,8 +39,32 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
             e.HasKey(x => x.RequestId);
             e.Property(x => x.RequestId).HasColumnName("request_id");
             e.Property(x => x.TripId).HasColumnName("trip_id");
-            e.Property(x => x.BookedAtUtc).HasColumnName("booked_at_utc");
+            e.Property(x => x.BookedAtUtc).HasColumnName("booked_at_utc").HasColumnType("timestamp with time zone").HasPrecision(6);
         });
+        b.Entity<DispatchPlan>(e =>
+        {
+            e.ToTable("dispatch_plans");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.RouteId).HasColumnName("route_id");
+            e.Property(x => x.Status).HasColumnName("status");
+            e.Property(x => x.PublishedAtUtc).HasColumnName("published_at_utc");
+            e.Property(x => x.DepartureUtc).HasColumnName("departure_utc");
+            e.Property(x => x.ScheduledDepartureUtc).HasColumnName("scheduled_departure_utc");
+            e.Property(x => x.NumberOfStops).HasColumnName("number_of_stops");
+        });
+       /* b.Entity<PublishedSnapshot>(e =>
+        {
+            e.ToTable("published_snapshots");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.RouteId).HasColumnName("route_id");
+            e.Property(x => x.RouteName).HasColumnName("route_name");
+            e.Property(x => x.DepartureTime).HasColumnName("departure_time");
+            e.Property(x => x.ArrivalTime).HasColumnName("arrival_time");
+            e.Property(x => x.Status).HasColumnName("status");
+            e.Property(x => x.NumberOfStops).HasColumnName("number_of_stops");
+        });*/
         ConfigureReadModels(b);
     }
 
