@@ -11,7 +11,7 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
     public DbSet<Trip> Trips => Set<Trip>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<DispatchPlan> DispatchPlans => Set<DispatchPlan>();
-   // public DbSet<PublishedSnapshot> PublishedSnapshots => Set<PublishedSnapshot>();
+    //public DbSet<PublishedSnapshot> PublishedSnapshots => Set<PublishedSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -50,10 +50,10 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
             e.Property(x => x.Status).HasColumnName("status");
             e.Property(x => x.PublishedAtUtc).HasColumnName("published_at_utc");
             e.Property(x => x.DepartureUtc).HasColumnName("departure_utc");
-            e.Property(x => x.ScheduledDepartureUtc).HasColumnName("scheduled_departure_utc");
+            e.Property(x => x.ScheduledDepartureUtc).HasColumnName("scheduled_departure_utc").HasColumnType("timestamp with time zone").HasPrecision(6);
             e.Property(x => x.NumberOfStops).HasColumnName("number_of_stops");
         });
-       /* b.Entity<PublishedSnapshot>(e =>
+        /*b.Entity<PublishedSnapshot>(e =>
         {
             e.ToTable("published_snapshots");
             e.HasKey(x => x.Id);
@@ -76,7 +76,8 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
         var options = new DbContextOptionsBuilder<LectureDbContext>()
             .UseNpgsql(connection)
             .AddInterceptors(new ReadCommandCounter(m), EntityMaterializationCounter.Instance);
-        if (lazy) options.UseLazyLoadingProxies();
+        if (lazy)
+            options.UseLazyLoadingProxies();
         return new LectureDbContext(options.Options, m);
     }
 }

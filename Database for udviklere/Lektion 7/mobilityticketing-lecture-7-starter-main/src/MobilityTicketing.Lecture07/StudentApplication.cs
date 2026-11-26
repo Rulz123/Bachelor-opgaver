@@ -1,4 +1,7 @@
+using System.Diagnostics.Eventing.Reader;
+using System.Runtime.Intrinsics.X86;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using MobilityTicketing.Lecture07.Contracts;
 using MobilityTicketing.Lecture07.Data;
 using MobilityTicketing.Lecture07.Diagnostics;
@@ -282,12 +285,11 @@ public sealed class StudentApplication(
         throw new InvalidOperationException(
             "Booking could not be completed after multiple attempts.");
     }
-    
+
     public async Task<PublishResult> PublishSnapshotAsync(string snapshotId, TimeWindow window,
         CancellationToken ct = default)
     {
         using var db = CreateContext();
-
         var routes = await ReadOverviewAsync(window, ct);
 
         var snapshot = new PublishedSnapshot(
@@ -296,7 +298,7 @@ public sealed class StudentApplication(
             DateTime.UtcNow,
             routes);
 
-        db.Set<PublishedSnapshot>().Add(snapshot);
+        db.Add(snapshot);
 
         await db.SaveChangesAsync(ct);
 
@@ -307,9 +309,12 @@ public sealed class StudentApplication(
     {
         using var db = CreateContext();
 
-        return await db.Set<PublishedSnapshot>()
-            .FirstAsync(s => s.Id == snapshotId, ct);
+        var snapshot = await db.FindAsync<PublishedSnapshot>(new object[] { snapshotId }, ct);
 
+        if(snapshot != null)
+            return snapshot;
+        
+        throw new ArgumentException($"There is no snapshot for {snapshotId}.");
     }
 
     public LectureDbContext CreateContext()

@@ -4,7 +4,7 @@ using MobilityTicketing.Lecture07.Data;
 public class PublishedSnapshot
 {
 
-    /* public PublishedSnapshot(string id, TimeWindow window, DateTime publishedAtUtc, List<RouteOverviewDto> routes)
+     public PublishedSnapshot(string id, TimeWindow window, DateTime publishedAtUtc, List<RouteOverviewDto> routes)
 {
     Id = id;
     RouteId = routes.First().RouteId;
