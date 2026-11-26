@@ -292,17 +292,33 @@ public sealed class StudentApplication(
         using var db = CreateContext();
         var routes = await ReadOverviewAsync(window, ct);
 
+        var verification = db.PublishedSnapshots.Where(ps => ps.Id == snapshotId
+        && ps.Window == window);
+
         var snapshot = new PublishedSnapshot(
             snapshotId,
             window,
             DateTime.UtcNow,
             routes);
 
-        db.Add(snapshot);
 
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            if (verification != null)
+            {
+                db.Add(snapshot);
+                await db.SaveChangesAsync(ct);
 
-        return await Task.FromResult(PublishResult.Published);
+                return await Task.FromResult(PublishResult.Published);
+            }
+            else
+                return await Task.FromResult(PublishResult.AlreadyPublished);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ArgumentException($"Error happened during insert into DB for {snapshotId}");
+        }
+
     }
 
     public async Task<PublishedSnapshot> ReadSnapshotAsync(string snapshotId, CancellationToken ct = default)
@@ -311,9 +327,9 @@ public sealed class StudentApplication(
 
         var snapshot = await db.FindAsync<PublishedSnapshot>(new object[] { snapshotId }, ct);
 
-        if(snapshot != null)
+        if (snapshot != null)
             return snapshot;
-        
+
         throw new ArgumentException($"There is no snapshot for {snapshotId}.");
     }
 

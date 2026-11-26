@@ -11,7 +11,8 @@ public class SnapshotTests : Fixture
     public async Task Published_snapshot_survives_a_new_application_instance()
     {
         Assert.Equal(PublishResult.Published, await App.PublishSnapshotAsync("dispatch", TimeWindow.Morning));
-        var saved = await App.ReadSnapshotAsync("dispatch");
+        var newApp = new StudentApplication(Connection, Clock);
+        var saved = await newApp.ReadSnapshotAsync("dispatch");
         Assert.Equal("dispatch", saved.Id);
         Assert.Equal(TimeWindow.Morning, saved.Window);
         Assert.Equal(Clock.Now.UtcDateTime, saved.PublishedAtUtc);
