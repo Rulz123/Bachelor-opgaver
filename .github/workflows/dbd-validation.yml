@@ -1,0 +1,55 @@
+name: DBD validation
+on:
+  push:
+    branches: [work/josephine-dbd-complete]
+    paths: ['Database for udviklere/**', '.github/workflows/dbd-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build cache and report CLI; check report workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="Database for udviklere"
+          cache=$(find "$root/Lektion 6" -name CacheLab.csproj -print -quit)
+          report=$(find "$root/Lektion 11" -path '*/MobilityTicketing.Reports/MobilityTicketing.Reports.csproj' -print -quit)
+          checks=$(find "$root/Lektion 11" -name WorkflowChecks.csproj -print -quit)
+          dotnet build "$cache"
+          dotnet build "$report"
+          dotnet run --project "$checks"
+          comparison=$(find "$root/Lektion 10" -name verify.test.cjs -print -quit)
+          node "$comparison"
+      - name: Lecture 7 PostgreSQL acceptance and measurements
+        working-directory: Database for udviklere/Lektion 7/mobilityticketing-lecture-7-starter-main
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose up -d --wait postgres
+          docker compose build app tests
+          docker compose run --rm tests
+          docker compose run --rm app reset
+          docker compose run --rm app baseline
+          docker compose run --rm app overview
+          cp -a docs/evidence/lecture07 docs/evidence/small-fixture
+          docker compose run --rm app publish initial
+          docker compose run --rm app cancel T102
+          docker compose run --rm app rename R1 "Changed route"
+          docker compose run --rm app snapshot initial
+          docker compose run --rm app scale
+          docker compose run --rm app baseline
+          docker compose run --rm app overview
+      - name: Save measurement logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbd-measurements
+          path: Database for udviklere/Lektion 7/mobilityticketing-lecture-7-starter-main/docs/evidence

@@ -1,25 +1,18 @@
-# Design decision
+# Lecture 7 design
 
-Add your sketch of the command/query paths and the tables they use.
+`StudentApplication` validates inputs and coordinates commands. `LiveRouteOverviewQuery` projects only DTO fields in one SQL read, including empty routes. No lazy-loading loop and no Route/Trip entities are needed for the board.
 
-Compare two designs in about 150 words. Explain your choice, what a cancellation
-would update, and how a published plan keeps its original values. Mark the
-transaction boundaries for booking and publication.
+Commands use the supplied `DatabaseSession.WriteAsync`: one transaction per operation, rollback on failure and stable advisory keys. Bookings serialize by request ID, then lock the trip row; cancellation locks that same trip row. An existing receipt is resolved before current trip status, so retrying after cancellation returns the original receipt. A request reused for another trip conflicts. Times come from the supplied clock and are truncated to PostgreSQL microseconds before returning a receipt.
 
-Table for live board:
-Id (pk for the daily table for iteration to use for history)
-route_short_name (fk to short_name)
-trip_counts (counts of unique id's)
-next_departure (scheduled_departure_utc <= datetime.now)
+Publication stores one JSONB document containing all displayed values, the UTC window and publication time. Header columns make retry-window comparison explicit. Same ID/window preserves the first version; a different window conflicts. Publication invokes the supplied failure hook before commit. ReadSnapshot loads only the JSON payload in one read. Later renames and cancellations do not modify saved documents.
 
-Live board table fields example 1 with live data: 
-trigger for updating after x minutes (Some time window set by the window between departures)
+This is CQRS within one application and PostgreSQL database: separate reads and commands do not require microservices or separate databases. JSON snapshots trade SQL analytics flexibility for a simple immutable read model.
 
-Example 2 with none live data:
-Collect the data at either midnight or early morning.
+## Student tests
 
-The first example is gonna be really expensive on the server, since it will look through alot of data, but it will be easy to adjust the table in case of changes, and that will keep customers up to date, and probably keep them happy on that front. 
+- Receipt retry after cancellation with a new application: persistence and original timestamp.
+- Concurrent reuse across different trips: exactly one booking and one conflict.
+- Failure before publication commit: no partial snapshot; retry succeeds.
+- Empty publication window: rejection without writes.
 
-On the other hand the second example is a lot less expensive, but it will not be able to take into account if changes really happen without an update. It is basically using a materialized view.
-
-This board is gonna be necessary for bookings to be made correctly, and publication also needs it to validate the trips for the day that users can book. Without the live board and its data, the users won't be able to get a good overview of the trips and routes that is scheduled, and therefore have a much harder time to book a seat, and use the public stransportation.
+The fixture intentionally drops and rebuilds lab07 before each test. A new DbContext does not create a new database.

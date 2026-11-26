@@ -15,19 +15,19 @@ insert into stops (id, city_id, name) values
     ('STOP-CENTRAL', 'CPH', 'Copenhagen Central Station')
 on conflict do nothing;
 
-insert into route_stops (name, route_id, stop_id, stop_sequence) values
-    ('STOPROAD 1', 'LINE-M2', 'STOP-NORREPORT', 1),
-    ('TRANSITROAD 2', 'LINE-M2', 'STOP-CENTRAL', 1),
-    ('POORROAD 556', 'LINE-M2', 'STOP-NORREPORT', 2),
-    ('STOPROAD 1', 'LINE-M2', 'STOP-CENTRAL', 2),
-    ('SEEDROAD 10', 'LINE-M2', 'STOP-NORREPORT', 3),
-    ('HURROAD 2', 'LINE-M2', 'STOP-CENTRAL', 3),
-    ('EXITROAD 34', 'LINE-5C', 'STOP-AIRPORT',1),
-    ('RICHROAD 2', 'LINE-5C', 'STOP-KONGENS-NYTORV',1),
-    ('SEEDROAD 10', 'LINE-5C', 'STOP-AIRPORT', 2),
-    ('KINGSROAD 2', 'LINE-5C', 'STOP-KONGENS-NYTORV', 2),
-    ('LASTSTOP 10', 'LINE-5C', 'STOP-AIRPORT', 3),
-    ('DURRROAD 1', 'LINE-5C', 'STOP-KONGENS-NYTORV', 3)
+insert into route_stops (id, route_id, stop_id, stop_sequence) values
+    ('M2-1', 'LINE-M2', 'STOP-NORREPORT', 1),
+    ('M2-2', 'LINE-M2', 'STOP-CENTRAL', 2),
+    ('M2-3', 'LINE-M2', 'STOP-NORREPORT', 3),
+    ('M2-4', 'LINE-M2', 'STOP-CENTRAL', 4),
+    ('M2-5', 'LINE-M2', 'STOP-NORREPORT', 5),
+    ('M2-6', 'LINE-M2', 'STOP-CENTRAL', 6),
+    ('5C-1', 'LINE-5C', 'STOP-AIRPORT', 1),
+    ('5C-2', 'LINE-5C', 'STOP-KONGENS-NYTORV', 2),
+    ('5C-3', 'LINE-5C', 'STOP-AIRPORT', 3),
+    ('5C-4', 'LINE-5C', 'STOP-KONGENS-NYTORV', 4),
+    ('5C-5', 'LINE-5C', 'STOP-AIRPORT', 5),
+    ('5C-6', 'LINE-5C', 'STOP-KONGENS-NYTORV', 6)
 on conflict do nothing;
 
 

@@ -1,5 +1,13 @@
 # MobilityTicketing: Lecture 9 starter
 
+## Current validation
+
+[Actual local results](../../../validation/README.md) include the supplied SQL suite and
+six additional concurrent-session checks. After starting/loading the isolated fixture, run
+`COMPOSE_PROJECT_NAME=dbdverify-l09-20261126 node sql/concurrency.test.cjs`.
+These results do not certify the historical stronger-isolation/deadlock narrative in docs/evidence.md;
+the report explicitly lists experiments not rerun.
+
 PostgreSQL 17 environment, fixture data, SQL scripts and a booking-function stub.
 Requires Docker with Compose. Run shell commands from this repository's root.
 

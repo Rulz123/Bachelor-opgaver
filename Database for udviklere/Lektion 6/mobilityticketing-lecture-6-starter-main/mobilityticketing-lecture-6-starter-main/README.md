@@ -1,5 +1,13 @@
 # MobilityTicketing: Lecture 6 starter
 
+## Verified local run
+
+[The local report](../../../validation/README.md) records 14 live checks after the
+embedded cancellation correction. Run
+`COMPOSE_PROJECT_NAME=dbdverify-l06-20261126 node database/redis/lecture06/verify.cjs`.
+It builds CacheLab, controls the interactive outage steps and checks the actual output.
+Use only the isolated test project; ensure another MongoDB service is not using port 27017.
+
 Add Redis caching around your journey search. Continue in your existing repository, or use this starter with the lecture 5 fixture.
 
 You need Docker Desktop with Compose and .NET 8 or later for the optional C# helper. Start MongoDB and Redis from this directory:

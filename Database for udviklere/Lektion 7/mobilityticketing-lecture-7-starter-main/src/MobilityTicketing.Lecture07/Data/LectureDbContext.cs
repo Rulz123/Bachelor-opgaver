@@ -11,7 +11,6 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
     public DbSet<Trip> Trips => Set<Trip>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<DispatchPlan> DispatchPlans => Set<DispatchPlan>();
-    public DbSet<Contracts.PublishedSnapshot> PublishedSnapshots => Set<Contracts.PublishedSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {

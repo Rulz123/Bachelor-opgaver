@@ -1,5 +1,13 @@
 # Implementation lab: Change product identity without breaking tickets
 
+Current evidence: [13 actual migration checks and restart commands](../../../../validation/README.md).
+The migration now uses a nullable product ID during expansion, a code/ID pair FK,
+repeatable backfill, and then NOT NULL. It does not install a compatibility trigger.
+Keep product codes stable while old writers exist; retire them before the NOT NULL step.
+Before dropping the legacy column, switch all readers/writers to IDs and rehearse without CASCADE.
+Restrict application permissions to prevent changing assigned product IDs. Returning to
+old code after column removal requires restoring/backfilling its schema contract, not only a code rollback.
+
 ## Scenario
 
 The transport operator wants to rename product codes without breaking existing tickets. Your job is to give each product an ID that stays the same when its code changes. You cannot update every application instance at once, so your migration needs to support old code that still reads and writes `product_code`.
@@ -50,7 +58,8 @@ Look to evidence for proof.
 
 4. Write a new insert that accepts a product ID and looks up the code from that product. Store both references and the agreed purchase price. If the caller supplies a conflicting product code, either reject it or ignore it and use the code you looked up.
 
-If there is a unknown product code it gets rejected, and the write takes the ID automatically via a trigger.
+The new writer accepts an ID and agreed price/currency, looks up its code, and rejects
+an unknown ID. The pair FK rejects direct SQL that mixes two different products.
 
 5. Write a query that finds a ticket's product by `product_id`, using `product_code` only when `product_id` is null. Test it before you fill in the IDs on existing tickets.
 
@@ -58,11 +67,13 @@ If there is a unknown product code it gets rejected, and the write takes the ID 
 
 6. Complete `031_backfill_ticket_product.sql.example`. Fill in `product_id` only where it is null. Run the backfill twice and check that the second run changes zero rows. Then insert another ticket using the old writer and run the backfill again. It should fill in the new ticket's reference without changing any IDs you already assigned.
 
-Done with a trigger.
+Done with a conditional UPDATE where product_id is null. The live test observes zero
+changes on the second run and one change after a late old-writer insert.
 
 7. Write checks for null product IDs, missing products, and code/ID pairs that point to different products. Compare the original tickets, prices and currencies with your starting data. Separately, try writing a mismatched pair directly in SQL and record whether the database rejects it.
 
-The database rejects these nulls, missing products and missmatch in pairs.
+During expansion NULL IDs are allowed and reported by verification. After backfill,
+NOT NULL rejects them. Foreign keys reject missing products and mismatched code/ID pairs.
 
 8. Complete `032_require_ticket_product.sql.example`. First, try making `product_id` required while one ticket still has a null reference. Capture the failure. Once you meet the conditions below, validate the foreign key and make the column required. Show that the old writer now fails.
 

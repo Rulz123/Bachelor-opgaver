@@ -1,0 +1,15 @@
+PASS staging does not publish
+PASS receipt contains byte measurements
+PASS unpublished report is unknown
+PASS recovery retries do not upload again
+PASS published exact version matches
+PASS replaced key preserves original version
+PASS corrupt receipt blocks recovery
+PASS object outage is not a mismatch
+PASS catalogue outage has its own result
+PASS duplicate reservation prevents another upload
+PASS duplicate stage did not issue PUT
+PASS changed bytes are a mismatch
+PASS blank upload version rejected
+PASS ambiguous upload keeps reservation
+14 workflow checks passed.

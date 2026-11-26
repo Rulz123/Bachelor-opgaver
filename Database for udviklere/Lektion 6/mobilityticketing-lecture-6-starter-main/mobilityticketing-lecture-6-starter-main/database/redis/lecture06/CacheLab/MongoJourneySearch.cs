@@ -41,8 +41,6 @@ public sealed class MongoJourneySearch
         if (DelayMilliseconds > 0) await Task.Delay(DelayMilliseconds);
         Interlocked.Increment(ref calls);
 
-        // TEST 7: Artificial delay
-        await Task.Delay(200);
 
         var range = new BsonDocument("$gte", new BsonDateTime(request.Start.UtcDateTime))
             .Add("$lt", new BsonDateTime(request.End.UtcDateTime));
@@ -74,18 +72,12 @@ public sealed class MongoJourneySearch
 
     public async Task<long> CancelTrip(string tripId)
     {
-        var filter = Builders<BsonDocument>.Filter.Eq(
-            x => x["tripId"],
-            tripId
-        );
-
-        var update = Builders<BsonDocument>.Update
-            .Set("IsCancelled", true);
-
-        var result = await collection.UpdateManyAsync(
-            filter,
-            update
-        );
+        // Departures are embedded: update the matching array element's authoritative status.
+        var filter = Builders<BsonDocument>.Filter.And(
+            Builders<BsonDocument>.Filter.Regex("_id", new BsonRegularExpression("^LAB05:")),
+            Builders<BsonDocument>.Filter.Eq("departures.tripId", tripId));
+        var update = Builders<BsonDocument>.Update.Set("departures.$.status", "Cancelled");
+        var result = await collection.UpdateManyAsync(filter, update);
 
         return result.ModifiedCount;
     }

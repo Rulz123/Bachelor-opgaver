@@ -1,5 +1,14 @@
 # MobilityTicketing: Lecture 1 starter
 
+## Local verification and model decision
+
+[The validation report](../../../validation/README.md) records fresh startup, repeatable
+seed and all three workload queries. The existing local status encoding is `1` for
+Scheduled and `0` for cancelled. Query parameters are `route_id`, `after_utc` and
+`service_date`. Route-stop IDs distinguish repeated visits to the same stop; the seed
+uses a separate ordered sequence per route. A future timetable model may separate a
+route pattern from individual runs. No claim is made that this slice implements ticketing.
+
 This repository is the starter code for the first lecture. It contains a small PostgreSQL slice for route maintenance and timetable queries.
 
 The exercise is intentionally incomplete. Add the route-stop key, complete the seed data, write the three workload queries, and follow the lab brief in `docs/lab.md`.

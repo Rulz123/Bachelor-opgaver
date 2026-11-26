@@ -5,15 +5,17 @@
 
 BEGIN;
 
+SET LOCAL lock_timeout = '3s';
+
 -- Validate existing product_id -> product relationship.
 ALTER TABLE tickets
     VALIDATE CONSTRAINT tickets_product_id_fkey;
+
+ALTER TABLE tickets
+    VALIDATE CONSTRAINT tickets_product_pair_fkey;
 
 -- Require every ticket to reference a product.
 ALTER TABLE tickets
     ALTER COLUMN product_id SET NOT NULL;
 
--- Removes old function.
-ALTER TABLE tickets
-    DROP CONSTRAINT tickets_set_product_id();
 COMMIT;

@@ -1,5 +1,27 @@
 # Implementation lab: Where should reporting logic execute?
 
+## Verified comparison
+
+[Eight local checks](../../../../validation/README.md) now execute the entire experiment
+inside a rolled-back transaction. Payments remain the authority. The insert-only summary
+is intentionally limited: the test records stale values after correction/refund/delete.
+It is not recommended as correct general-purpose reporting logic.
+
+| Approach | Freshness/correctness | Write/read cost | Side effects | Rebuild and ownership |
+|---|---|---|---|---|
+| Direct query | Current source at statement snapshot | No extra writes; joins/aggregation on read | None | Query payments; application owns request |
+| SQL function | Same result as direct query | Same underlying query cost | No report writes | Replace function; database owns reusable query |
+| Materialized view | Stale until explicit refresh | Refresh work; cheap stored reads | Refresh takes resources/locks | REFRESH from payments; schedule has an owner |
+| Insert-only summary | Ignores corrections/deletes and initial history | Extra write per captured insert; cheap read | Trigger writes in payment transaction | Must rebuild from payments; invalid for current mutable-payment requirements |
+
+For this small mutable dataset, prefer the direct query or its SQL function. Use a
+materialized view only with an explicit acceptable-staleness rule and refresh owner.
+One payment insert checks the baseline constraints, executes the insert trigger, and
+writes/locks its operator/day summary in the same transaction; rollback undoes both.
+The MV does not change until refresh. Duplicate references are accepted by this lesson's
+permissive baseline, illustrating why the separate integrity lesson matters.
+The older discussion below is the original exploration, not a timing benchmark.
+
 ## Purpose
 
 Implement and compare a direct SQL query, a user-defined function, a materialized view, and a trigger-maintained summary for daily captured revenue. Use the differences to decide where the responsibility belongs.

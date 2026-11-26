@@ -1,5 +1,5 @@
 -- After expansion, use this query to choose a product ID for your test.
-select id, code, price, currency from products order by code;
+select product_id, code, price, currency from products order by code;
 
 -- TODO: Write a function or parameterized insert that accepts a product ID.
 -- Look up its code and store both references on the ticket.
@@ -10,8 +10,8 @@ select id, code, price, currency from products order by code;
 
 WITH vars AS (
     SELECT
-        'LAB04-Test-1'::text AS ticket_id,
-        'LAB04-CODE-Test-1'::text AS ticket_code
+        :'ticket_id'::text AS ticket_id,
+        :'ticket_code'::text AS ticket_code
 )
 INSERT INTO tickets (
     id,
@@ -23,7 +23,8 @@ INSERT INTO tickets (
     valid_from_utc,
     valid_to_utc,
     price,
-    currency
+    currency,
+    product_id
 )
 SELECT
     vars.ticket_id,
@@ -31,11 +32,12 @@ SELECT
     t.trip_id,
     vars.ticket_code,
     t.status,
-    t.product_code,
+    (select code from products where product_id = :'product_id'::uuid),
     t.valid_from_utc,
     t.valid_to_utc,
-    t.price,
-    t.currency
+    :'purchase_price'::numeric,
+    :'purchase_currency',
+    :'product_id'::uuid
 FROM tickets t
 CROSS JOIN vars
 WHERE t.id = 'TICKET-1';
