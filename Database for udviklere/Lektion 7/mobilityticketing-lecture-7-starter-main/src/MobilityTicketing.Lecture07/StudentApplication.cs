@@ -1,7 +1,11 @@
 using System.Diagnostics.Eventing.Reader;
 using System.Runtime.Intrinsics.X86;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.VisualBasic;
 using MobilityTicketing.Lecture07.Contracts;
 using MobilityTicketing.Lecture07.Data;
 using MobilityTicketing.Lecture07.Diagnostics;
@@ -292,23 +296,23 @@ public sealed class StudentApplication(
         using var db = CreateContext();
         var routes = await ReadOverviewAsync(window, ct);
 
-        var verification = db.PublishedSnapshots.Where(ps => ps.Id == snapshotId
-        && ps.Window == window);
+        var validation = ReadSnapshotAsync(snapshotId, ct);
 
-        var snapshot = new PublishedSnapshot(
-            snapshotId,
-            window,
-            DateTime.UtcNow,
-            routes);
-
+        var publishTime = Clock.GetUtcNow().UtcDateTime;
+        PublishedSnapshot publishableSnapshot = new PublishedSnapshot(snapshotId, window, publishTime, routes);
 
         try
         {
-            if (verification != null)
+            if (validation != null)
             {
-                db.Add(snapshot);
-                await db.SaveChangesAsync(ct);
-
+                await DatabaseSession.WriteAsync<PublishedSnapshot>(Connection,
+                "snapshot:" + snapshotId, async db =>
+                {
+                    string jsonData = MakeSnapshotJson(window, routes);
+                    var snapshotBoard = new SnapshotBoard(snapshotId, jsonData);
+                    var publishedSnapshot = new PublishedSnapshot(snapshotId, window, publishTime, routes);
+                    return await Task.FromResult<PublishedSnapshot>(publishedSnapshot);
+                });
                 return await Task.FromResult(PublishResult.Published);
             }
             else
@@ -318,19 +322,27 @@ public sealed class StudentApplication(
         {
             throw new ArgumentException($"Error happened during insert into DB for {snapshotId}");
         }
-
     }
 
-    public async Task<PublishedSnapshot> ReadSnapshotAsync(string snapshotId, CancellationToken ct = default)
+    public async Task<Contracts.PublishedSnapshot> ReadSnapshotAsync(string snapshotId, CancellationToken ct = default)
     {
         using var db = CreateContext();
 
-        var snapshot = await db.FindAsync<PublishedSnapshot>(new object[] { snapshotId }, ct);
+        var snapshot = await db.FindAsync<Contracts.PublishedSnapshot>(new object[] { snapshotId }, ct);
 
         if (snapshot != null)
             return snapshot;
 
         throw new ArgumentException($"There is no snapshot for {snapshotId}.");
+    }
+
+    private string MakeSnapshotJson(
+    TimeWindow window,
+    List<RouteOverviewDto> routes)
+    {
+        var snapshot = new { Window = window, Clock.GetUtcNow().UtcDateTime, routes };
+        var snapshotJson = JsonSerializer.Serialize(snapshot);
+        return snapshotJson;
     }
 
     public LectureDbContext CreateContext()

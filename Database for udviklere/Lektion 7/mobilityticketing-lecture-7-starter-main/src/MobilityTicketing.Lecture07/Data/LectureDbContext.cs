@@ -11,7 +11,8 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
     public DbSet<Trip> Trips => Set<Trip>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<DispatchPlan> DispatchPlans => Set<DispatchPlan>();
-    public DbSet<Contracts.PublishedSnapshot> PublishedSnapshots => Set<Contracts.PublishedSnapshot>();
+    public DbSet<SnapshotBoard> snapshotBoard => Set<SnapshotBoard>();
+   // public DbSet<Contracts.PublishedSnapshot> PublishedSnapshots => Set<Contracts.PublishedSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -53,18 +54,13 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
             e.Property(x => x.ScheduledDepartureUtc).HasColumnName("scheduled_departure_utc").HasColumnType("timestamp with time zone").HasPrecision(6);
             e.Property(x => x.NumberOfStops).HasColumnName("number_of_stops");
         });
-       /* b.Entity<PublishedSnapshot>(e =>
+        b.Entity<SnapshotBoard>(e =>
         {
             e.ToTable("published_snapshots");
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
-            e.Property(x => x.RouteId).HasColumnName("route_id");
-            e.Property(x => x.RouteName).HasColumnName("route_name");
-            e.Property(x => x.DepartureTime).HasColumnName("departure_time");
-            e.Property(x => x.ArrivalTime).HasColumnName("arrival_time");
-            e.Property(x => x.Status).HasColumnName("status");
-            e.Property(x => x.NumberOfStops).HasColumnName("number_of_stops");
-        });*/
+            e.Property(x => x.snapshotData).HasColumnName("snapshot_data");
+        });
         ConfigureReadModels(b);
     }
 

@@ -15,15 +15,15 @@ CREATE TABLE lab07.dispatch_plans (
             'Cancelled'
         )
     ),
-    number_of_stops INTEGER NOT NULL
+    number_of_trips INTEGER NOT NULL
 );
 
 
-CREATE OR REPLACE FUNCTION lab07.calculate_number_of_stops()
+CREATE OR REPLACE FUNCTION lab07.calculate_number_of_trips()
 RETURNS TRIGGER AS $$
 BEGIN
     SELECT COUNT(*)
-    INTO NEW.number_of_stops
+    INTO NEW.number_of_trips
     FROM lab07.trips
     WHERE trips.route_id = NEW.route_id;
 
@@ -32,8 +32,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER set_number_of_stops
+CREATE TRIGGER set_number_of_trips
 BEFORE INSERT OR UPDATE OF route_id
 ON lab07.dispatch_plans
 FOR EACH ROW
-EXECUTE FUNCTION lab07.calculate_number_of_stops();
+EXECUTE FUNCTION lab07.calculate_number_of_trips();
